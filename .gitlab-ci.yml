@@ -1,0 +1,114 @@
+stages:
+  - build
+  - test
+  - publish
+  - deploy
+
+# workflow:
+#   rules:
+#     - changes:
+#         - src/**/*
+        
+build documentation:
+  stage: build
+  image: $IMAGE_REGISTRY_PATH_DSPDF/docker:20.10.16
+  tags:
+    - $GITLAB_RUNNER_DIND
+  services:
+    - name: $IMAGE_REGISTRY_PATH_DSPDF/docker:20.10.16-dind
+      alias: docker
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  script:
+    - source .scripts/cicd/jobs.sh; build_doc
+  artifacts:
+    paths:
+      - doc/index.html
+
+# build database:
+#   stage: build
+#   image: $IMAGE_REGISTRY_PATH_DSPDF/node:18.17.1
+#   tags:
+#     - $GITLAB_RUNNER_DEFAULT
+#   script:
+#     - source .scripts/cicd/jobs.sh; build-database
+#   artifacts:
+#     paths:
+#       - assets/database.sqlite.gz
+
+build package:
+  stage: build
+  needs: 
+    - build documentation
+  image: $IMAGE_REGISTRY_PATH_DSPDF/node:18.17.1
+  tags:
+    - $GITLAB_RUNNER_DEFAULT
+  script:
+    - source .scripts/cicd/jobs.sh; build_package
+  artifacts:
+    paths:
+      - package-lock.json
+      - package
+      - dist
+      - dockerfile
+      - .scripts
+
+test package:
+  stage: test
+  needs: 
+    - build package
+  image: $IMAGE_REGISTRY_PATH_DSPDF/node:18.17.1
+  variables:
+    GIT_STRATEGY: none
+  tags:
+    - $GITLAB_RUNNER_DEFAULT
+  script:
+    - source .scripts/cicd/jobs.sh; test_package
+  artifacts:
+    paths:
+      - package
+      - dist
+      - dockerfile
+      - .scripts
+
+publish package:
+  stage: publish
+  needs: 
+    - test package
+  image: $IMAGE_REGISTRY_PATH_DSPDF/node:18.17.1
+  variables:
+    GIT_STRATEGY: none
+  tags:
+    - $GITLAB_RUNNER_DEFAULT
+  script:
+    - source .scripts/cicd/jobs.sh; publish_package
+  allow_failure: true
+
+publish image:
+  stage: publish
+  needs: 
+    - test package
+  image: $IMAGE_REGISTRY_PATH_DSPDF/docker:20.10.16
+  variables:
+    IMAGE_REGISTRY_PATH: $IMAGE_REGISTRY_PATH_DSPDF
+    APP_NAME: fixmap
+  tags:
+    - $GITLAB_RUNNER_DIND
+  services:
+    - name: $IMAGE_REGISTRY_PATH_DSPDF/docker:20.10.16-dind
+      alias: docker
+  script:
+    - source .scripts/cicd/jobs.sh; build_publish_image
+  artifacts:
+    paths:
+      - package
+  
+deploy image:
+  stage: deploy
+  needs:
+    - publish image
+  image: $IMAGE_REGISTRY_PATH_DSPDF/node:18.17.1
+  tags:
+    - $GITLAB_RUNNER_DEFAULT
+  script:
+    - source .scripts/cicd/jobs.sh; deploy_image

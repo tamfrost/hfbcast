@@ -1,0 +1,23 @@
+= *iqplayer*
+Author Name
+LPR1, {docdate}
+:stem: latexmath
+:eqnums:
+:sectnums:
+:xrefstyle: short
+:figure-caption: Figure
+:stylesheet: asciidoctor-default.css
+:stylesdir: styles
+
+[[sec:chapter1]]
+== Chapter 1
+
+[[sec:section1]]
+=== Section
+
+[[sec:section2]]
+=== Section
+
+[[sec:chapter2]]
+== Chapter 2
+...

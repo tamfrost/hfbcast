@@ -1,0 +1,71 @@
+{
+  "name": "@dspdf/hfbcast",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "bin": {
+    "@dspdf/hfbcast": "server.js",
+    "hfbcast-runserver": "server.js",
+    "hfbcast-test": "test/runTests.js"
+  },
+  "scripts": {
+    "build": "webpack",
+    "dev": "webpack serve",
+    "devserve": "webpack serve --env server=start",
+    "serve": "nodemon server.js",
+    "job:clean": "node .scripts/cicd/runjob.js --type clean",
+    "job:doc": "node .scripts/cicd/runjob.js --type doc",
+    "job:database": "node .scripts/cicd/runjob.js --type database",
+    "job:package": "node .scripts/cicd/runjob.js --type package",
+    "job:test": "node .scripts/cicd/runjob.js --type test",
+    "job:run": "node .scripts/cicd/runjob.js --type run",
+    "job:image": "node .scripts/cicd/runjob.js --type image",
+    "job:publish": "node .scripts/cicd/runjob.js --type publish",
+    "job:deploy": "node .scripts/cicd/runjob.js --type deploy",
+    "test": "jest --silent",
+    "publicate": "node .scripts/publish.js hfbcast",
+    "installate": "node .scripts/preinstall.js && npm install && node .scripts/postinstall.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "css-loader": "^7.1.2",
+    "express": "^4.19.1",
+    "http-proxy-middleware": "^2.0.6",
+    "jquery": "^3.7.0",
+    "log4js": "^6.9.1",
+    "pako": "^2.1.0",
+    "sql.js": "^1.10.2",
+    "style-loader": "^4.0.0",
+    "url-loader": "^4.1.1",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "ag-grid-community": "^32.2.2",
+    "dockerode": "^3.3.5",
+    "glob": "^11.0.0",
+    "html-webpack-plugin": "^5.6.0",
+    "jest": "^29.7.0",
+    "node-fetch": "2.6.5",
+    "nodemon": "^3.1.0",
+    "rimraf": "^6.0.1",
+    "shelljs": "^0.8.5",
+    "terser-webpack-plugin": "^5.3.10",
+    "webpack": "^5.91.0",
+    "webpack-bundle-analyzer": "^4.10.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "4.15.1"
+  },
+  "jobInfo": {
+    "doc": "1. build documentation",
+    "database": "2. build the database",
+    "package": "3. build and pack the application (needs 1 & 2)",
+    "test": "4. run tests (needs 3)",
+    "run": "5. run the package (needs 3)",
+    "publish": "6. publish the package (needs 3)",
+    "image": "7. build the application image (needs 3)",
+    "deploy": "8. deploy the application (needs 7)"
+  }
+}

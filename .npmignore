@@ -1,0 +1,16 @@
+.devcontainer
+.aws
+.git*
+.vscode
+.dockerignore
+id_rsa*
+sources
+src
+lib
+assets
+sqlite
+docker*
+webpack.config.js
+wasm
+lib/mathjax.tgz
+*.tgz
