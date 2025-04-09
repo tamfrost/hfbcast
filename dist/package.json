@@ -1,10 +1,10 @@
 {
-  "name": "@dspdf/hfbcast",
+  "name": "@tamfrost/hfbcast",
   "version": "1.0.6-lib5",
   "description": "",
   "main": "./hfbcast.min.js",
   "bin": {
-    "@dspdf/hfbcast": "test.js",
+    "@tamfrost/hfbcast": "test.js",
     "hfbcast-test": "test.js"
   },
   "files": [ 
