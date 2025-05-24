@@ -1,0 +1,16 @@
+name: 'Emscripten emsdk'
+description: 'Compile c++ to WASM'
+
+inputs:
+  cppfile:
+    description: 'cpp file name'
+    required: true
+
+runs:
+  using: 'docker'
+  image: 'emscripten/emsdk'
+  args:
+    - emcc
+    - ${{ inputs.cppfile }}.cpp
+    - -o
+    - ${{ inputs.cppfile }}.js

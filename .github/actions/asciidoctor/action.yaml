@@ -1,0 +1,17 @@
+name: 'Asciidoctor'
+description: 'Build dockumentation with asciidoctor'
+
+inputs:
+  function:
+    description: 'function to run'
+    required: true
+
+runs:
+  using: 'docker'
+  image: 'asciidoctor/docker-asciidoctor'
+  entrypoint: /bin/bash
+  args:
+    - -c
+    - |
+      source .scripts/cicd/jobs.sh
+      ${{ inputs.function }}

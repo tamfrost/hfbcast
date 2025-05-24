@@ -1,0 +1,17 @@
+name: 'node20'
+description: 'For running npm and node'
+
+inputs:
+  function:
+    description: 'function to run'
+    required: true
+
+runs:
+  using: 'docker'
+  image: 'node:20'
+  entrypoint: /bin/bash
+  args:
+    - -c
+    - |
+      source .scripts/cicd/jobs.sh
+      ${{ inputs.function }}

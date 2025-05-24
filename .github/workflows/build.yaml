@@ -1,0 +1,147 @@
+name: Build Documentation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - prep-github
+      # - main
+
+env:
+  CI_COMMIT_SHORT_SHA: ""
+
+jobs:
+
+  build-all:
+    runs-on: ['self-hosted','ubuntu']
+    env:
+      NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: set short commit hash and version
+        run: |
+          echo "CI_COMMIT_SHORT_SHA=${GITHUB_SHA::8}" >> $GITHUB_ENV
+          echo "APP_VERSION=$(jq -r '.version' package.json)" >> $GITHUB_ENV
+
+      - name: Build documentation
+        uses: ./.github/actions/asciidoctor
+        env:
+          CI_COMMIT_SHORT_SHA: ${{ env.CI_COMMIT_SHORT_SHA }}
+          MATHJAX_URL: ${{ env.MATHJAX_URL }}
+        with:
+          function: build_documentation
+
+      - name: Build database
+        uses: ./.github/actions/node20
+        env:
+          CI_COMMIT_SHORT_SHA: ${{ env.CI_COMMIT_SHORT_SHA }}
+        with:
+          function: build_database
+
+      - name: Build package
+        uses: ./.github/actions/node20
+        env:
+          CI_COMMIT_SHORT_SHA: ${{ env.CI_COMMIT_SHORT_SHA }}
+          NPMRC: ${{ secrets.NPMRC }}
+        with:
+          function: build_package
+
+      - name: Test package
+        uses: ./.github/actions/node20
+        env:
+          NPMRC: ${{ secrets.NPMRC }}
+        with:
+          function: test_package
+
+      - name: Publish package
+        continue-on-error: true
+        uses: ./.github/actions/node20
+        env:
+          NPMRC: ${{ secrets.NPMRC }}
+        with:
+          function: publish_package
+
+      # - name: Fix permissions
+      #   if: always()
+      #   run: sudo chown -R $(whoami):$(whoami) .
+
+
+      # echo Hello
+      # ls -al      stage: build
+      # image: $IMAGE_REGISTRY_PATH_DSPDF/docker:20.10.16
+      # tags:
+      #   - $GITLAB_RUNNER_DIND
+      # services:
+      #   - name: $IMAGE_REGISTRY_PATH_DSPDF/docker:20.10.16-dind
+      #     alias: docker
+      # variables:
+      #   DOCKER_TLS_CERTDIR: "/certs"
+      # script:
+      #   - source .scripts/cicd/jobs.sh; build_doc
+      # artifacts:
+      #   paths:
+      #     - doc/index.html
+
+
+
+  # build-documentation:
+  #   runs-on: ['self-hosted','ubuntu']
+  #   env:
+  #     ACTIONS_STEP_DEBUG: true
+  #     NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v4
+  #   - name: Build with pandoc/latex
+  #     run: |
+  #          cat /etc/*release*
+  #          cd doc
+  #          docker run --rm --volume "$(pwd):/data" --user $(id -u):$(id -g) docker.io/pandoc/latex --toc -V colorlinks -V geometry:margin=25mm -V block-headings FixEstimation.md -o FixEstimation.pdf
+  #          docker run --rm --volume "$(pwd):/data" --user $(id -u):$(id -g) docker.io/pandoc/latex --toc --standalone --mathjax -f markdown -t html --css FixEstimation.css FixEstimation.md -o FixEstimation.html
+  #          mv FixEstimation.html index.html
+  #          ls -al
+  #   - name: Upload doc artifacts
+  #     uses: actions/upload-artifact@v4
+  #     with:
+  #       name: doc-artifacts
+  #       path: doc
+
+  # push-documentation:
+  #   runs-on: ['self-hosted','ubuntu']
+  #   env:
+  #     ACTIONS_STEP_DEBUG: true
+  #     NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
+  #   needs: [build-documentation]
+  #   permissions:
+  #     contents: write    
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #       with:
+  #         ref: gh-pages
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+
+  #     - name: Download artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: doc-artifacts
+  #         path: docs/doc # Specify a directory to download to
+
+  #     - name: Add files
+  #       run: |
+  #         ls -al docs/doc
+  #         git add docs/doc/.
+
+  #     - name: Commit changes
+  #       run: |
+  #         git config --local user.email "your-actions-bot@github.com"
+  #         git config --local user.name "GitHub Actions Bot"
+  #         git commit -m "Updated documentation" || echo "No changes to commit"
+
+  #     - name: Push changes
+  #       run: |
+  #         git push origin gh-pages
+

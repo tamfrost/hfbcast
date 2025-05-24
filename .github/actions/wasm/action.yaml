@@ -1,0 +1,17 @@
+name: 'Wasm'
+description: 'Build web assembly'
+
+inputs:
+  function:
+    description: 'function to run'
+    required: true
+
+runs:
+  using: 'docker'
+  image: 'tamfrost/emsdk:4.0.6-utils-1'
+  entrypoint: /bin/bash
+  args:
+    - -c
+    - |
+      source .scripts/cicd/jobs.sh
+      ${{ inputs.function }}

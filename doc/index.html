@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.23">
 <meta name="author" content="Author Name">
-<title>Title</title>
+<title>iqplayer</title>
 <style>
 /*! Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
 /* Uncomment the following line when using as a custom stylesheet */
@@ -406,107 +406,24 @@ div.page-break{display:block;-moz-column-break-after:page;break-after:page}
 </head>
 <body class="article">
 <div id="header">
-<h1><strong>Title</strong></h1>
+<h1><strong>iqplayer</strong></h1>
 <div class="details">
 <span id="author" class="author">Author Name</span><br>
 <span id="revnumber">version 1,</span>
-<span id="revdate">2024-04-30</span>
+<span id="revdate">2025-04-08</span>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
 <h2 id="sec:chapter1">1. Chapter 1</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>In the following text a cartesian coordinate system is defined with \(x\) pointing east, \(y\) pointing north and \(z\) pointing straght up. A 3-dimensional vector \(\boldsymbol{v}\) is denoted with a bold font and it&#8217;s absolute value \(v\) with a normal font.</p>
-</div>
 <div class="sect2">
 <h3 id="sec:section1">1.1. Section</h3>
-<div id="img-figure1" class="imageblock right text-center">
-<div class="content">
-<img src="images/figure1.png" alt="Figure1">
-</div>
-<div class="title">Figure 1. A plane wave</div>
-</div>
-<div class="paragraph">
-<p>Consider a plane wave with angular wave number \(\boldsymbol{k}\) which points in the direction of the vector normal to the wave plane and has the magnitude \(k=2\pi/\lambda\).</p>
-</div>
-<div class="paragraph">
-<p>In a point selected as the origin \(\boldsymbol{r}=\boldsymbol{0}\) it will generate a signal \(x_0(t) = Ae^{i\omega t+\phi}\), where \(\omega=c/k\). The phase \(\phi\) will depend on the location of this origin and the choice of \(t=0\),  and the amplitude \(A\) will depend on the signal strength and antenna properties and orientation, but lets normalize it to one here.</p>
-</div>
-<div class="paragraph">
-<p>Assuming a simple carrier wave with stationary amplitude and angular frequency \(\omega\) (this is an extreme case of the so called <em>narowband approximation</em>), the signal \(x(t)\) at an arbitrary point \(\boldsymbol{r}\) will be given by just a spatial phase shift of the amount \(\boldsymbol{k}\cdot\boldsymbol{r}\). Hence</p>
-</div>
-<div id="eq-1" class="stemblock">
-<div class="content">
-\[\begin{equation}
-x(\boldsymbol{r},t) = x_0(t)e^{i{\boldsymbol{k}}\cdot{\boldsymbol{r}}}
-\end{equation}\]
-</div>
-</div>
+
 </div>
 <div class="sect2">
 <h3 id="sec:section2">1.2. Section</h3>
-<div class="paragraph">
-<p>Now consider two antennas located at \(\boldsymbol{r}_N\) and \(\boldsymbol{r}_S\), with equal distance \(r\) and and opposite direction from the origin according to <a href="#img-figure1">Figure 1</a>. If we use that \(\boldsymbol{r}_N = -\boldsymbol{r}_S\) and take the difference and the sum of the signal in the two antennas, we get using Eulers formula</p>
-</div>
-<div id="eq-2" class="stemblock">
-<div class="content">
-\[\begin{equation}
-\begin{aligned}
-x_{N-S}(t) &amp; = x(\boldsymbol{r_N},t) - x(\boldsymbol{r_S},t) = x_0(t)(e^{i{\boldsymbol{k}}\cdot{\boldsymbol{r}_N}} -e^{-i{\boldsymbol{k}}\cdot{\boldsymbol{r}_N}}) = \,x_0(t)\,2i\sin({\boldsymbol{k}}\cdot{\boldsymbol{r}_N}) \\
-x_{N+S}(t) &amp; = x(\boldsymbol{r_N},t) + x(\boldsymbol{r_S},t) = x_0(t)(e^{i{\boldsymbol{k}}\cdot{\boldsymbol{r}_N}} + e^{-i{\boldsymbol{k}}\cdot{\boldsymbol{r}_N}}) = \,x_0(t)\,2\cos({\boldsymbol{k}}\cdot{\boldsymbol{r}_N})
-\end{aligned}
-\end{equation}\]
-</div>
-</div>
-<div class="paragraph">
-<p>Assuming the wave comes in from an azimuth direction \(\varphi\) and with zero elevation, we have , using \(k=2\pi/\lambda\), that \(\boldsymbol{k}\cdot{\boldsymbol{r}_N} = kr\cos(\pi/2-\varphi) = 2\pi\frac{r}{\lambda}\sin(\varphi)\). And after rearranging we get</p>
-</div>
-<div id="eq-3" class="stemblock">
-<div class="content">
-\[\begin{equation}
-\begin{aligned}
-x_{N-S}(t) &amp; = 2\sin\left(2\pi\frac{r}{\lambda}\sin(\varphi)\right)\,\, ix_0(t) := \Delta(t)\\
-x_{N+S}(t) &amp; = 2\cos\left(2\pi\frac{r}{\lambda}\sin(\varphi)\right)\,\, x_0(t) := \Sigma(t)
-\end{aligned}
-\end{equation}\]
-</div>
-</div>
-<div class="paragraph">
-<p>\(x_0(t)\) is the signal that an antenna at the origin would pick up. \(ix_0(t)\) is  that signal phase-shifted by 90\(^\circ\). The factor in front gives the signal amplitude dependence on the azimuth angle \(\varphi\). The factor of 2 in front of the sine reflects the fact that the signal from the two antennas are added in the directions where the interference is constructive.</p>
-</div>
-<div class="paragraph">
-<p>As \(\lambda\) becomes much bigger than \(r\), the approximations \(sin(x) \to x\) and \(cos(x) \to 1\) for small \(x\) gives the following simple \(\varphi\)-dependent gain for the amplitude</p>
-</div>
-<div id="eq-4" class="stemblock">
-<div class="content">
-\[\begin{equation}
-\begin{aligned}
-|\Delta| &amp; \underset{\lambda \gg r}{=} \frac{4\pi r}{\lambda}|\sin(\varphi)| \\
-|\Sigma| &amp; \underset{\lambda \gg r}{=} 2
-\end{aligned}
-\end{equation}\]
-</div>
-</div>
-<div class="paragraph">
-<p>These are equations for perfect circles in polar coordinates. The first one is a circle with radius \(\frac{2\pi r}{\lambda}\) and the center located at \((\rho,\varphi)=(\frac{2\pi r}{\lambda},\pi)\) and the second one is a circle centered at the origin with radius \(2\). So when the wavelength becomes large, and the phase-difference between the antennas therefore becomes negligible, the subtracted signal vanishes and the added signal becomes doubled, just as expected.</p>
-</div>
-<div id="img-figure2" class="imageblock text-center">
-<div class="content">
-<img src="images/figure2.png" alt="Figure2" width="750">
-</div>
-<div class="title">Figure 2. (<strong>left</strong>) A pair of antennas located at distance \(2r\). The hatched line illustrates a plane wave front with angular wave vector \(\boldsymbol{k}\) for some wavelength \(\lambda\) (\(k=2\pi/\lambda\)). The colored areas shows the gain patterns for three different wavelengths, \(2r\), \(4r\) and \(3r\). (<strong>right</strong>) A polar diagram showing the sum- and difference-signals. The phase difference between the \(x_N\) and \(x_S\) signals will depend on \(\lambda\) and the azimuth \(\varphi\). The magnitude of the sum-signal is approximately constant for small phase differences.</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="sec:section3">1.3. Section</h3>
-<div class="paragraph">
-<p>If the field consists of multiple plane waves arriving from different directions due to reflections, scattering or multiple transmissions the situation becomes a bit different. Each wave can of course be described like above and superimposed. The result of this is however that the \(\Sigma\) - \(\Delta\) phase difference in general is no longer 90\(^\circ\).</p>
-</div>
-<div class="paragraph">
-<p>This can be understood by looking at <a href="#eq-4">[eq-4]</a> &#8230;&#8203;</p>
-</div>
+
 </div>
 </div>
 </div>
@@ -522,7 +439,7 @@ x_{N+S}(t) &amp; = 2\cos\left(2\pi\frac{r}{\lambda}\sin(\varphi)\right)\,\, x_0(
 <div id="footer">
 <div id="footer-text">
 Version 1<br>
-Last updated 2024-04-30 11:41:14 UTC
+Last updated 2025-04-08 16:15:49 UTC
 </div>
 </div>
 <script type="text/x-mathjax-config">

@@ -1,0 +1,17 @@
+name: 'Pandoc latex'
+description: 'Build dockumentation with pandoc'
+
+inputs:
+  function:
+    description: 'function to run'
+    required: true
+
+runs:
+  using: 'docker'
+  image: 'pandoc/latex'
+  entrypoint: /bin/sh
+  args:
+    - -c
+    - |
+      .scripts/cicd/jobs.sh
+      ${{ inputs.function }}

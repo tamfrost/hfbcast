@@ -1,10 +1,10 @@
 {
-  "name": "@tamfrost/hfbcast",
+  "name": "@fra/hfbcast",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.js",
   "bin": {
-    "@tamfrost/hfbcast": "server.js",
+    "@fra/hfbcast": "server.js",
     "hfbcast-runserver": "server.js",
     "hfbcast-test": "test/runTests.js"
   },
