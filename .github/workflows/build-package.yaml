@@ -1,0 +1,65 @@
+name: Build package
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - prep-github
+      # - main
+
+env:
+  CI_COMMIT_SHORT_SHA: ""
+
+jobs:
+
+  build-all:
+    runs-on: ['self-hosted','ubuntu']
+    env:
+      NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: set short commit hash and version
+        run: |
+          echo "CI_COMMIT_SHORT_SHA=${GITHUB_SHA::8}" >> $GITHUB_ENV
+          echo "APP_VERSION=$(jq -r '.version' package.json)" >> $GITHUB_ENV
+
+      - name: Build documentation
+        uses: ./.github/actions/asciidoctor
+        env:
+          CI_COMMIT_SHORT_SHA: ${{ env.CI_COMMIT_SHORT_SHA }}
+          MATHJAX_URL: ${{ env.MATHJAX_URL }}
+        with:
+          function: build_documentation
+
+      - name: Build database
+        uses: ./.github/actions/node22
+        env:
+          CI_COMMIT_SHORT_SHA: ${{ env.CI_COMMIT_SHORT_SHA }}
+        with:
+          function: build_database
+
+      - name: Build package
+        uses: ./.github/actions/node22
+        env:
+          CI_COMMIT_SHORT_SHA: ${{ env.CI_COMMIT_SHORT_SHA }}
+          NPMRC: ${{ secrets.NPMRC }}
+        with:
+          function: build_package
+
+      - name: Test package
+        uses: ./.github/actions/node22
+        env:
+          NPMRC: ${{ secrets.NPMRC }}
+        with:
+          function: test_package
+
+      - name: Publish package
+        continue-on-error: true
+        uses: ./.github/actions/node22
+        env:
+          NPMRC: ${{ secrets.NPMRC }}
+        with:
+          function: publish_package

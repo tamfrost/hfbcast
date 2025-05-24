@@ -1,0 +1,63 @@
+name: Build image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - prep-github
+      # - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish-image:
+    runs-on: ["self-hosted", "ubuntu"]
+    env:
+      NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
+      IMAGE_NAME: ${{ vars.CONTAINER_REGISTRY }}/${{ vars.NAMESPACE }}/hfbcast
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: set short commit hash and version
+        run: |
+          echo "CI_COMMIT_SHORT_SHA=${GITHUB_SHA::8}" >> $GITHUB_ENV
+          echo "APP_VERSION=$(jq -r '.version' dist/package.json)" >> $GITHUB_ENV
+
+      - name: build app image
+        run: |
+          docker build -t $IMAGE_NAME:$CI_COMMIT_SHORT_SHA . \
+          --build-arg NAMESPACE=${{ vars.NAMESPACE }} \
+          --build-arg COMMIT_SHA=$CI_COMMIT_SHORT_SHA \
+          --build-arg APP_VERSION=$APP_VERSION
+
+      - name: login to registry
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ vars.CONTAINER_REGISTRY }} -u ${{ vars.NAMESPACE }} --password-stdin
+
+      - name: tag and publish image
+        run: |
+          docker tag $IMAGE_NAME:$CI_COMMIT_SHORT_SHA $IMAGE_NAME:latest
+          docker push $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+          docker push $IMAGE_NAME:latest
+
+  # deploy-to-stage:
+  #   needs: build-and-publish-image
+  #   uses: ./.github/workflows/deploy-argocd.yaml
+  #   with:
+  #     environment: stage
+  #     deployment_path: stage
+  #   secrets:
+  #     token: ${{ secrets.GITHUB_TOKEN }}
+
+  # deploy-to-prod:
+  #   needs: deploy-to-stage
+  #   uses: ./.github/workflows/deploy-argocd.yaml
+  #   with:
+  #     environment: prod
+  #     deployment_path: prod
+  #   secrets:
+  #     token: ${{ secrets.GITHUB_TOKEN }}

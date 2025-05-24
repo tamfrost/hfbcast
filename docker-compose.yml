@@ -1,12 +1,12 @@
 services:
-  hfbcast:
-    image: $GITLAB_CI_REGISTRY/dspdf/hfbcast:1.0.2
+  app:
+    image: hfbcast
     container_name: hfbcast-app
-    # build:
-    #   context: .
-    #   args:
-    #     IMAGE_REGISTRY_PATH: $IMAGE_REGISTRY_PATH
-    #     APP_NAME: hfbcast
+    build:
+      context: .
+      args:
+        COMMIT_SHA: compose
+        APP_VERSION: "1.2.3"
     ports:
-      - "58883:8080"
+      - 58080:8080"
 
