@@ -69,11 +69,6 @@ jobs:
         with:
           function: publish_package
 
-      - name: Fix permissions
-        if: always()
-        run: |
-            whoami
-            id
-            sudo -l
-            ls -al ../../.
-            echo "p" | sudo -S chown -R $(whoami):$(whoami) ../../.
+      # - name: Fix permissions
+      #   if: always()
+      #   run: echo "${PPP}" | sudo -S chown -R $(whoami):$(whoami) ../../.
