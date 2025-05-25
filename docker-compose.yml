@@ -1,6 +1,6 @@
 services:
   app:
-    image: hfbcast
+    image: ghcr.io/tamfrost/hfbcast:latest
     container_name: hfbcast-app
     build:
       context: .
@@ -8,5 +8,5 @@ services:
         COMMIT_SHA: compose
         APP_VERSION: "1.2.3"
     ports:
-      - 58080:8080"
+      - 58080:8080
 
