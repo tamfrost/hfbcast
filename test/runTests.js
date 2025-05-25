@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-console.log('testing package');
+console.log('testing package hfbcast ...');
 
 // const jest = require("jest");
 // const path = require("path");
