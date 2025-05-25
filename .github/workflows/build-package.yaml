@@ -21,10 +21,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: set short commit hash and version
+      - name: Set short commit hash and version
         run: |
           echo "CI_COMMIT_SHORT_SHA=${GITHUB_SHA::8}" >> $GITHUB_ENV
           echo "APP_VERSION=$(jq -r '.version' package.json)" >> $GITHUB_ENV
+
+      - name: Prepare .npmrc
+        run: |
+          echo -e ${{ secrets.NPMRC }} | base64 -d > ~/.npmrc
+          [ -f /aws_login ] && /aws_login && cp ~/.npmrc ./ || echo "aws_login not found, skipping copy"
 
       - name: Build documentation
         uses: ./.github/actions/asciidoctor

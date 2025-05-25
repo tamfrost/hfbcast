@@ -1,14 +1,28 @@
 #!/usr/bin/env bash
 
+prepare_npmrc() {
+    if [ -n "$NPMRC" ]; then
+        echo found NPMRC environment variable
+        echo -e ${NPMRC} | base64 -d > .npmrc
+        if command -v aws >/dev/null 2>&1; then
+            echo "aws cli detected, logging in to CodeArtifact"
+            pwd
+            ./aws_login
+        fi
+    else
+        prepare_npmrc_gitlab_instance
+    fi
+}
+
 prepare_npmrc_gitlab_instance() {
-    echo "@dspdf:registry = https://${CI_SERVER_HOST}/api/v4/packages/npm/" >.npmrc
-    echo "//${CI_SERVER_HOST}/api/v4/packages/npm/:_authToken=${PERSONAL_ACCESS_TOKEN}" >>.npmrc
+    echo "@dspdf:registry = https://${CI_SERVER_HOST}/api/v4/packages/npm/" > .npmrc
+    echo "//${CI_SERVER_HOST}/api/v4/packages/npm/:_authToken=${PERSONAL_ACCESS_TOKEN}" >> .npmrc
     npm config set strict-ssl false || true
 }
 
 prepare_npmrc_gitlab_project() {
-    echo "@dspdf:registry=https://${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/packages/npm/" >.npmrc
-    echo "//${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/packages/npm/:_authToken=${PERSONAL_ACCESS_TOKEN}" >>.npmrc
+    echo "@dspdf:registry=https://${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/packages/npm/" > .npmrc
+    echo "//${CI_SERVER_HOST}/api/v4/projects/${CI_PROJECT_ID}/packages/npm/:_authToken=${PERSONAL_ACCESS_TOKEN}" >> .npmrc
     npm config set strict-ssl false || true
 }
 
@@ -61,12 +75,7 @@ build_package() {
     PS4=$(printf "\n\033[1;33mPACKAGE >>\033[0m ")
     set -x
 
-    if [ -n "$NPMRC" ]; then
-        echo found NPMRC environment variable
-        echo -e ${NPMRC} | base64 -d >.npmrc
-    else
-        prepare_npmrc_gitlab_instance
-    fi
+    cp .npmrc ~/.npmrc
 
     echo {\"commitHash\": \"${CI_COMMIT_SHORT_SHA}\"} >commithash.json
 
@@ -87,12 +96,7 @@ test_package() {
     PS4=$(printf "\n\033[1;33mTEST >>\033[0m ")
     set -x
 
-    if [ -n "$NPMRC" ]; then
-        echo found NPMRC environment variable
-        echo -e ${NPMRC} | base64 -d >.npmrc
-    else
-        prepare_npmrc_gitlab_instance
-    fi
+    cp .npmrc ~/.npmrc
 
     ls -al dist
     ls -al package
@@ -108,12 +112,7 @@ run_package() {
     PS4=$(printf "\n\033[1;33mRUN >>\033[0m ")
     set -x
 
-    if [ -n "$NPMRC" ]; then
-        echo found NPMRC environment variable
-        echo -e ${NPMRC} | base64 -d >.npmrc
-    else
-        prepare_npmrc_gitlab_instance
-    fi
+    cp .npmrc ~/.npmrc
 
     # apt-get update && apt-get install -y netcat-openbsd
     ls -al package
@@ -126,12 +125,7 @@ publish_package() {
     PS4=$(printf "\n\033[1;33mPUBLISH >>\033[0m ")
     set -x
 
-    if [ -n "$NPMRC" ]; then
-        echo found NPMRC environment variable
-        echo -e ${NPMRC} | base64 -d >.npmrc
-    else
-        prepare_npmrc_gitlab_instance
-    fi
+    cp .npmrc ~/.npmrc
 
     cp dist/*.tgz ./dist-package.tgz
     cat .npmrc
@@ -143,12 +137,7 @@ build_publish_image() {
     PS4=$(printf "\n\033[1;33mIMAGE >>\033[0m ")
     set -x
 
-    if [ -n "$NPMRC" ]; then
-        echo found NPMRC environment variable
-        echo -e ${NPMRC} | base64 -d >.npmrc
-    else
-        prepare_npmrc_gitlab_instance
-    fi
+    cp .npmrc ~/.npmrc
 
     PACKAGE_VERSION=$(cat package/version.txt)
     PACKAGE_NAME=$(cat package/name.txt)
