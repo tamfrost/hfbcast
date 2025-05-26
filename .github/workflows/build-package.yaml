@@ -35,7 +35,7 @@ jobs:
         uses: ./.github/actions/asciidoctor
         env:
           CI_COMMIT_SHORT_SHA: ${{ env.CI_COMMIT_SHORT_SHA }}
-          MATHJAX_URL: ${{ env.MATHJAX_URL }}
+          MATHJAX_URL: ${{ vars.MATHJAX_URL }}
         with:
           function: build_documentation
 

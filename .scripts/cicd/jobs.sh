@@ -75,6 +75,8 @@ build_package() {
     PS4=$(printf "\n\033[1;33mPACKAGE >>\033[0m ")
     set -x
 
+    echo running build_package
+
     cp .npmrc ~/.npmrc
 
     echo {\"commitHash\": \"${CI_COMMIT_SHORT_SHA}\"} >commithash.json
