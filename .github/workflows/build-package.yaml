@@ -28,7 +28,7 @@ jobs:
 
       - name: Prepare .npmrc
         run: |
-          echo -e ${{ secrets.NPMRC }} | base64 -d > ~/.npmrc
+          echo -e ${{ secrets.NPMRC }} | base64 -d > ~/.npmrc && cp ~/.npmrc ./ 
           [ -f /aws_login ] && /aws_login && cp ~/.npmrc ./ || echo "aws_login not found, skipping copy"
 
       - name: Build documentation
