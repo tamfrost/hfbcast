@@ -8,7 +8,7 @@ inputs:
 
 runs:
   using: 'docker'
-  image: 'asciidoctor/docker-asciidoctor'
+  image: 'asciidoctor/docker-asciidoctor:1.83.0'
   entrypoint: /bin/bash
   args:
     - -c
