@@ -1,17 +1,23 @@
 {
-  "name": "@fra/hfbcast",
-  "version": "1.0.0",
+  "name": "@fra/df-hfbcast",
+  "version": "1.0.7-lib6",
   "description": "",
-  "main": "src/index.js",
+  "main": "./index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.sys/FRA/hfbcast.git"
+    "url": "https://github.sys/FRA/df-hfbcast.git"
   },
   "bin": {
     "@fra/hfbcast": "server.js",
     "hfbcast-runserver": "server.js",
     "hfbcast-test": "test/runTests.js"
   },
+  "files": [
+    "src",
+    "index.js",
+    "assets",
+    "commithash.json"
+  ],
   "scripts": {
     "build": "webpack",
     "dev": "webpack serve",
