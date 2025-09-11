@@ -9,8 +9,8 @@
   },
   "bin": {
     "@fra/df-hfbcast": "server.js",
-    "hfbcast-runserver": "server.js",
-    "hfbcast-test": "test/runTests.js"
+    "df-hfbcast-runserver": "server.js",
+    "df-hfbcast-test": "test/runTests.js"
   },
   "files": [
     "src",
@@ -47,7 +47,7 @@
     "jquery": "^3.7.0",
     "log4js": "^6.9.1",
     "pako": "^2.1.0",
-    "sql.js": "1.10.2",
+    "sql.js": "^1.10.2",
     "style-loader": "^4.0.0",
     "url-loader": "^4.1.1",
     "yargs": "^17.7.2"
