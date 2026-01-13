@@ -8,16 +8,16 @@ export class Site {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
+    @Column({type: "text"})
     name: string;
 
-    @Column()
+    @Column({type: "real"})
     power: number;
 
-    @Column()
+    @Column({type: "real"})
     lon: number;
 
-    @Column()
+    @Column({type: "real"})
     lat: number;
 
     @OneToMany(type => Broadcast, broadcasts => broadcasts.site)

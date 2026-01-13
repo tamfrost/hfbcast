@@ -139,7 +139,7 @@ else {
             rm: '--rm',
             mount: `-v ${path.resolve(__dirname, '../../')}:/code -w /code`,
             portmap: '',
-            image: process.env.DSPDF_IMAGE_REGISTRY_PATH_MAIN + '/node:18.17.1',
+            image: process.env.DSPDF_IMAGE_REGISTRY_PATH_MAIN + '/node:22.14.0',
             shell: 'bash',
             command: 'cd /code && source .scripts/cicd/jobs.sh; build_database',
             dind: false,

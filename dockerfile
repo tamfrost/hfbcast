@@ -33,7 +33,7 @@ COPY --from=docbuild /app .
 SHELL ["/bin/bash", "-c"]
 
 RUN cd /app && source .scripts/cicd/jobs.sh && build_database
-RUN cd /app && source .scripts/cicd/jobs.sh && build_package 
+RUN cd /app && source .scripts/cicd/jobs.sh && build_package
 
 #=====================================================
 # build final image

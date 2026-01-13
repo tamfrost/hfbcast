@@ -8,28 +8,28 @@ export class Broadcast {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({nullable: true})
+    @Column({type: "real", nullable: true})
     frequency: number;
 
-    @Column({nullable: true})
+    @Column({type: "integer", nullable: true})
     days: number;
 
-    @Column({nullable: true})
+    @Column({type: "integer", nullable: true})
     startTime: number;
 
-    @Column({nullable: true})
+    @Column({type: "integer", nullable: true})
     endTime: number;
 
-    @Column({nullable: true})
+    @Column({type: "text", nullable: true})
     station: string;
 
-    @Column({nullable: true})
+    @Column({type: "text", nullable: true})
     country: string;
 
-    @Column({nullable: true})
+    @Column({type: "text", nullable: true})
     language: string;
 
-    @Column({nullable: true})
+    @Column({type: "text", nullable: true})
     source: string;
 
     @ManyToOne(type => Site)

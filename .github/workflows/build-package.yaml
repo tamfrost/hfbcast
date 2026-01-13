@@ -39,12 +39,12 @@ jobs:
         with:
           function: build_documentation
 
-      # - name: Build database
-      #   uses: ./.github/actions/node22
-      #   env:
-      #     CI_COMMIT_SHORT_SHA: ${{ env.CI_COMMIT_SHORT_SHA }}
-      #   with:
-      #     function: build_database
+      - name: Build database
+        uses: ./.github/actions/node22
+        env:
+          CI_COMMIT_SHORT_SHA: ${{ env.CI_COMMIT_SHORT_SHA }}
+        with:
+          function: build_database
 
       - name: Build package
         uses: ./.github/actions/node22

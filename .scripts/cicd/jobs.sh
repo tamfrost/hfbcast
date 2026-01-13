@@ -58,13 +58,57 @@ build_documentation() {
 }
 
 build_database() {
-    # written for emscripten/emsdk:2.0.34
+    # written for node:22.14.0
     PS4=$(printf "\n\033[1;33mDATABASE >>\033[0m ")
     set -x
 
+    # Install Chrome dependencies for Puppeteer
+    apt-get update && apt-get install -y \
+        ca-certificates \
+        fonts-liberation \
+        libasound2 \
+        libatk-bridge2.0-0 \
+        libatk1.0-0 \
+        libc6 \
+        libcairo2 \
+        libcups2 \
+        libdbus-1-3 \
+        libexpat1 \
+        libfontconfig1 \
+        libgbm1 \
+        libgcc1 \
+        libglib2.0-0 \
+        libgtk-3-0 \
+        libnspr4 \
+        libnss3 \
+        libpango-1.0-0 \
+        libpangocairo-1.0-0 \
+        libstdc++6 \
+        libx11-6 \
+        libx11-xcb1 \
+        libxcb1 \
+        libxcomposite1 \
+        libxcursor1 \
+        libxdamage1 \
+        libxext6 \
+        libxfixes3 \
+        libxi6 \
+        libxrandr2 \
+        libxrender1 \
+        libxss1 \
+        libxtst6 \
+        lsb-release \
+        wget \
+        xdg-utils \
+        --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
     cd sqlite
+    rm -f package-lock.json
     npm install -g ts-node
     npm install
+    npm rebuild sqlite3
+    npx puppeteer browsers install chrome
     npm run build
     gzip database.sqlite
     mv database.sqlite.gz ../assets
@@ -89,8 +133,8 @@ build_package() {
     node .scripts/getPackageInfo.js name >package/name.txt
     node .scripts/getPackageInfo.js version >package/version.txt
     node .scripts/getPackageInfo.js namespace >package/namespace.txt
-    cd dist
-    npm pack
+    # cd dist
+    # npm pack
 }
 
 test_package() {
