@@ -9,3 +9,5 @@ id_rsa.appServer
 .scripts/local/env.txt
 .npmrc
 *.tgz
+.env
+certs/

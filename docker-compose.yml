@@ -5,8 +5,8 @@ services:
     build:
       context: .
       args:
-        COMMIT_SHA: compose
-        APP_VERSION: "1.2.3"
+        COMMIT_SHA: ${COMMIT_SHA}
+        APP_VERSION: ${APP_VERSION}
     ports:
       - 58080:8080
 

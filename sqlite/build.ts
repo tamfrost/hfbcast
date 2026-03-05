@@ -4,6 +4,7 @@ import * as url from 'url';
 import { AppDataSource } from "./data-source";
 import {Site} from "./entity/Site";
 import {Broadcast} from "./entity/Broadcast";
+import {BuildInfo} from "./entity/BuildInfo";
 import puppeteer from 'puppeteer';
 const { JSDOM } = require("jsdom");
 const jquery = require("jquery");
@@ -16,7 +17,12 @@ async function scrapeAndParseBroadcasts(database: string, retries: number = 3): 
     console.log(`Starting browser for ${database}...`);
     const browser = await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--ignore-certificate-errors',
+            '--ignore-certificate-errors-spki-list'
+        ]
     });
     
     try {
@@ -116,6 +122,10 @@ async function scrapeAndParseBroadcasts(database: string, retries: number = 3): 
             throw new Error(`No table found for ${database}`);
         }
         
+        // Save the page content for all successful parses
+        require('fs').writeFileSync(`debug_${database}.html`, pageContent);
+        console.log(`Page content saved to debug_${database}.html`);
+        
         console.log(`Parsing broadcasts for ${database}...`);
         
         // Parse the HTML table
@@ -194,6 +204,15 @@ async function scrapeAndParseBroadcasts(database: string, retries: number = 3): 
         }
         
         console.log(`Found ${broadcasts.length} broadcasts for ${database}`);
+        
+        // Delete the debug HTML file after successful parsing
+        try {
+            require('fs').unlinkSync(`debug_${database}.html`);
+            console.log(`Deleted debug_${database}.html`);
+        } catch (e) {
+            // Ignore error if file doesn't exist
+        }
+        
         return broadcasts;
         
     } finally {
@@ -256,5 +275,13 @@ AppDataSource.initialize().then(async () => {
 
     console.log('FOUND', uniques, 'UNIQUE BROADCASTS');
     console.log('FOUND', nonUniques, 'NON UNIQUE BROADCASTS');
+
+    // Save build information
+    console.log('SAVING BUILD INFO ...');
+    const buildInfo = new BuildInfo();
+    buildInfo.buildDate = new Date().toISOString();
+    buildInfo.commitHash = process.env.CI_COMMIT_SHORT_SHA || 'local';
+    await AppDataSource.manager.save(buildInfo);
+    console.log(`Build info saved: ${buildInfo.buildDate}, commit: ${buildInfo.commitHash}`);
 
 }).catch((error: any) => console.log(error))

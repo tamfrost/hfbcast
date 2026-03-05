@@ -27,7 +27,7 @@ jobs:
       - name: set short commit hash and version
         run: |
           echo "CI_COMMIT_SHORT_SHA=${GITHUB_SHA::8}" >> $GITHUB_ENV
-          echo "APP_VERSION=$(jq -r '.version' dist/package.json)" >> $GITHUB_ENV
+          echo "APP_VERSION=$(jq -r '.version' package.json)" >> $GITHUB_ENV
 
       - name: build app image
         run: |

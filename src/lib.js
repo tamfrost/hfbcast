@@ -111,6 +111,21 @@ class BroadcastDb {
 
         return broadcasts;
     }
+
+    getBuildInfo() {
+        const query = `SELECT * FROM build_info ORDER BY id DESC LIMIT 1`;
+        const res = this.db.exec(query);
+        
+        if (res.length > 0 && res[0].values.length > 0) {
+            const buildInfo = {};
+            res[0].values[0].forEach((colvalue, i) => {
+                buildInfo[res[0].columns[i]] = colvalue;
+            });
+            return buildInfo;
+        }
+        
+        return null;
+    }
 }
 
 module.exports = {

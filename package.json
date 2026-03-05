@@ -1,5 +1,5 @@
 {
-  "name": "@fra/df-hfbcast",
+  "name": "@tamfrost/hfbcast",
   "version": "1.0.8-lib7",
   "description": "",
   "main": "./index.js",
@@ -14,27 +14,19 @@
   },
   "files": [
     "src",
+    "dist",
+    "doc",
+    "server.js",
     "index.js",
     "assets",
     "commithash.json"
   ],
   "scripts": {
     "build": "webpack",
+    "build:db": "cd sqlite && npm install && npm run build && gzip database.sqlite && mv database.sqlite.gz ../assets",
     "dev": "webpack serve",
     "devserve": "webpack serve --env server=start",
-    "serve": "nodemon server.js",
-    "job:clean": "node .scripts/cicd/runjob.js --type clean",
-    "job:doc": "node .scripts/cicd/runjob.js --type doc",
-    "job:database": "node .scripts/cicd/runjob.js --type database",
-    "job:package": "node .scripts/cicd/runjob.js --type package",
-    "job:test": "node .scripts/cicd/runjob.js --type test",
-    "job:run": "node .scripts/cicd/runjob.js --type run",
-    "job:image": "node .scripts/cicd/runjob.js --type image",
-    "job:publish": "node .scripts/cicd/runjob.js --type publish",
-    "job:deploy": "node .scripts/cicd/runjob.js --type deploy",
-    "test": "jest --silent",
-    "publicate": "node .scripts/publish.js hfbcast",
-    "installate": "node .scripts/preinstall.js && npm install && node .scripts/postinstall.js"
+    "serve": "nodemon server.js"
   },
   "keywords": [],
   "author": "",
