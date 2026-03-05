@@ -4,15 +4,16 @@ on:
   workflow_dispatch:
   push:
     branches:
-      # - prep-github
-      - main
+      - prep-github-pup
+      # - main
 
 permissions:
   contents: write
 
 jobs:
   build-and-publish-image:
-    runs-on: ["self-hosted", "ubuntu"]
+    # runs-on: ["self-hosted", "ubuntu"]
+    runs-on: ubuntu-latest
     env:
       NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
       IMAGE_NAME: ${{ vars.CONTAINER_REGISTRY }}/${{ vars.NAMESPACE }}/hfbcast

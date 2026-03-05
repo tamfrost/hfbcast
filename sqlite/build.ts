@@ -12,7 +12,7 @@ const jquery = require("jquery");
 
 type BroadcastArray = Broadcast[];
 
-async function scrapeAndParseBroadcasts(database: string): Promise<BroadcastArray> {
+async function scrapeAndParseBroadcasts(database: string, retries: number = 3): Promise<BroadcastArray> {
     console.log(`Starting browser for ${database}...`);
     const browser = await puppeteer.launch({
         headless: true,
@@ -25,20 +25,40 @@ async function scrapeAndParseBroadcasts(database: string): Promise<BroadcastArra
         console.log('Navigating to https://shortwavedb.org/...');
         await page.goto('https://shortwavedb.org/', {
             waitUntil: 'networkidle2',
-            timeout: 30000
+            timeout: 60000
         });
         
         console.log('Waiting 5 seconds before calling CGI script...');
         await new Promise(resolve => setTimeout(resolve, 5000));
         
-        console.log(`Navigating to https://shortwavedb.org/cgi-bin/shortwave.cgi for ${database}...`);
-        
-        console.log('No form found, trying direct URL with parameters...');
-        const queryParams = `database=${database}&country=All&language=All&band=All&timezone=UTC&display=Now&frequnits=kHz&sort=Frequency&latitude=&longitude=&units=Kilometers`;
-        await page.goto(`https://shortwavedb.org/cgi-bin/shortwave.cgi?${queryParams}`, {
-            waitUntil: 'networkidle2',
-            timeout: 30000
-        });
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                console.log(`Navigating to https://shortwavedb.org/cgi-bin/shortwave.cgi for ${database}... (Attempt ${attempt}/${retries})`);
+                
+                console.log('No form found, trying direct URL with parameters...');
+                const queryParams = `database=${database}&country=All&language=All&band=All&timezone=UTC&display=Now&frequnits=kHz&sort=Frequency&latitude=&longitude=&units=Kilometers`;
+                await page.goto(`https://shortwavedb.org/cgi-bin/shortwave.cgi?${queryParams}`, {
+                    waitUntil: 'networkidle2',
+                    timeout: 90000
+                });
+                
+                // Check for timeout or error pages
+                const pageTitle = await page.title();
+                if (pageTitle.includes('Timeout') || pageTitle.includes('Error')) {
+                    throw new Error(`Page shows timeout or error: ${pageTitle}`);
+                }
+                
+                // If we get here, the page loaded successfully
+                break;
+            } catch (error) {
+                if (attempt === retries) {
+                    throw error; // Re-throw on last attempt
+                }
+                const waitTime = attempt * 10000; // 10s, 20s, 30s
+                console.log(`Attempt ${attempt} failed. Waiting ${waitTime/1000} seconds before retry...`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
+            }
+        }
         
         console.log(`Page loaded for ${database}. Extracting table content...`);
         
@@ -193,13 +213,18 @@ AppDataSource.initialize().then(async () => {
         const database = databases[i];
         
         if (i > 0) {
-            console.log('Waiting 5 seconds before next database call...');
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            console.log('Waiting 10 seconds before next database call...');
+            await new Promise(resolve => setTimeout(resolve, 10000));
         }
         
-        const broadcasts = await scrapeAndParseBroadcasts(database);
-        console.log(`${database} TOTAL: `, broadcasts.length);
-        allBroadcasts.push(...broadcasts);
+        try {
+            const broadcasts = await scrapeAndParseBroadcasts(database);
+            console.log(`${database} TOTAL: `, broadcasts.length);
+            allBroadcasts.push(...broadcasts);
+        } catch (error) {
+            console.error(`Failed to scrape ${database} after all retries:`, error.message);
+            console.log(`Continuing with remaining databases...`);
+        }
     }
 
     console.log(allBroadcasts.length, 'BROADCASTS FOUND IN TOTAL');
