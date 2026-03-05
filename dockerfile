@@ -31,13 +31,19 @@ WORKDIR /app
 COPY . .
 COPY --from=docbuild /app/doc ./doc
 
-# Copy and install custom CA certificates
-COPY certs/*.pem certs/*.crt /tmp/certs/
-RUN cat /tmp/certs/* >> /etc/ssl/certs/ca-certificates.crt && \
-    cat /tmp/certs/* > /tmp/custom-ca-certs.pem && \
-    npm config set -g cafile /etc/ssl/certs/ca-certificates.crt && \
-    npm config set -g proxy $HTTP_PROXY && \
-    npm config set -g https-proxy $HTTPS_PROXY && \
+# Copy and install custom CA certificates (if they exist)
+RUN mkdir -p /tmp/certs && \
+    if [ -d "certs" ] && [ "$(ls -A certs/*.pem certs/*.crt 2>/dev/null)" ]; then \
+        cp certs/*.pem certs/*.crt /tmp/certs/ 2>/dev/null || true; \
+    fi && \
+    if [ "$(ls -A /tmp/certs 2>/dev/null)" ]; then \
+        cat /tmp/certs/* >> /etc/ssl/certs/ca-certificates.crt && \
+        cat /tmp/certs/* > /tmp/custom-ca-certs.pem && \
+        npm config set -g cafile /etc/ssl/certs/ca-certificates.crt && \
+        npm config set -g proxy $HTTP_PROXY && \
+        npm config set -g https-proxy $HTTPS_PROXY && \
+        export NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt; \
+    fi && \
     rm -rf /tmp/certs
 
 ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
