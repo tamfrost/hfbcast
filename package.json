@@ -1,11 +1,11 @@
 {
-  "name": "@tamfrost/hfbcast",
+  "name": "hfbcast",
   "version": "1.0.8-lib7",
   "description": "",
   "main": "./index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.sys/FRA/df-hfbcast.git"
+    "url": "https://github.com/tamfrost/hfbcast.git"
   },
   "bin": {
     "@fra/df-hfbcast": "server.js",
