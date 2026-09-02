@@ -34,12 +34,12 @@ class BroadcastDb {
         const currentMinute = now.getUTCMinutes();
         const currentTime = currentMinute + 60*currentHour;
 
-        const query = `SELECT * FROM broadcast 
-         JOIN site on broadcast.siteId = site.id 
+        const query = `SELECT * FROM broadcast
+         JOIN site on broadcast.siteId = site.id
          WHERE broadcast.station LIKE '%${station}%'`
         const res = this.db.exec(query);
 
-        return res[0];
+        return res[0] || {columns: [], values: []};
     }
 
     getBroadcastsBetween(minFreqkHz, maxFreqkHz, startTm = new Date(), endTm = new Date()) {
@@ -68,7 +68,7 @@ class BroadcastDb {
     `
         const res = this.db.exec(query);
 
-        return res[0];
+        return res[0] || {columns: [], values: []};
     }
 
 

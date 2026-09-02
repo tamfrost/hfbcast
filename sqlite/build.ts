@@ -133,7 +133,7 @@ async function scrapeAndParseBroadcasts(database: string, retries: number = 3): 
         const $ = jquery(dom.window);
         
         const broadcasts: BroadcastArray = [];
-        const rows = $('table.results tr');
+        const rows = $('tr');
         // console.log(rows);
         
         console.log(`Found ${rows.length} rows in table for ${database}`);
@@ -146,7 +146,7 @@ async function scrapeAndParseBroadcasts(database: string, retries: number = 3): 
             const cells = $(row).find('td');
             
             const fq = Number.parseFloat($(cells[0]).html());
-            const startStopTime = $(cells[1]).html().split('-');
+            const startStopTime = $(cells[1]).text().split('-');
             const station = $(cells[2]).html();
             const country = $(cells[3]).html();
             const language = $(cells[4]).html();
@@ -225,7 +225,7 @@ AppDataSource.initialize().then(async () => {
 
     console.log('SCRAPING AND PARSING HTML ...');
 
-    const databases = ['AOKI', 'EiBi', 'HFCC'];
+    const databases = ['AOKI', 'EiBi', 'HFCC', 'ITU'];
     const allBroadcasts: BroadcastArray = [];
     
     for (let i = 0; i < databases.length; i++) {

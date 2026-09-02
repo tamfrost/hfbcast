@@ -25,6 +25,9 @@ const config = {
     resolve: {
         fallback: {path: false, fs: false, crypto: false}
     },
+    experiments: {
+        asyncWebAssembly: false
+    },
     devServer: {
         port: 3333,
         client: {

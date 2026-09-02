@@ -10,7 +10,8 @@
     "reflect-metadata": "^0.2.2",
     "sqlite3": "^5.1.7",
     "ts-node": "^10.9.1",
-    "typeorm": "^0.3.28"
+    "typeorm": "^0.3.28",
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@types/jsdom": "^27.0.0",

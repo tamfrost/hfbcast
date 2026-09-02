@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches:
-      # - prep-github-pup
-      - main
+      - prep-github-pup
+      #- main
 
 permissions:
   contents: write
