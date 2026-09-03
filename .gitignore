@@ -11,3 +11,5 @@ id_rsa.appServer
 *.tgz
 .env
 certs/
+notes.txt
+*.sqlite

@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 
 const log4js = require("log4js");
+const express = require('express')
+const path = require('path')
+const cors = require('cors')
+const app = express()
 
+const db = require('./database')
 
-function server(config, silent) {
+const logger = log4js.getLogger();
 
-    const express = require('express')
-    const path = require('path')
-    const cors = require('cors')
-    const app = express()
+function server(config, silent) {    
 
-    const logger = log4js.getLogger();
     logger.level = silent ? 'fatal' : 'debug';
 
     let resolver, rejecter;
@@ -19,20 +20,10 @@ function server(config, silent) {
     app.use(cors());
     app.options('*', cors());
 
-    // //allowing for use of sharedArrayBuffers
-    // app.use((req, res, next) => {
-    //     res.setHeader("Cross-Origin-Opener-Policy", "same-origin"); 
-    //     // res.setHeader("Cross-Origin-Embedder-Policy", "same-origin"); 
-    //     next();
-    // })
+    db.initDb()
 
-    //******************************
-    //     serve static content
-    //******************************
-
-    app.use(express.static(path.resolve(__dirname, 'dist')));
-    // app.use('/doc/mathjax', express.static(path.resolve(__dirname, 'lib/mathjax')));
-    app.use('/doc', express.static(path.resolve(__dirname, 'doc')));
+    // server static homepage content
+    app.use('/', express.static(path.join(__dirname, 'public')));
 
     //******************************
     //          REST
@@ -53,6 +44,16 @@ function server(config, silent) {
         res.json({requestBody: req.body});
     })
 
+    app.get("/api/v1/broadcast", (req, res) => {
+        const result = db.findAll()
+        if (!result) {
+            return res.status(404).json({
+                error: "Failed to query database"
+            })
+        }
+        res.json({result})
+    })
+
     //******************************
     //          proxy
     //******************************
@@ -61,11 +62,11 @@ function server(config, silent) {
 
     app.use('/jsontest',
         createProxyMiddleware({
-        target: 'http://echo.jsontest.com/',
-        changeOrigin: true,
-        pathRewrite: {
-            '^/jsontest':''
-        }
+            target: 'http://echo.jsontest.com/',
+            changeOrigin: true,
+            pathRewrite: {
+                '^/jsontest':''
+            }
         }),
     );
 
@@ -73,16 +74,14 @@ function server(config, silent) {
     //     set up web sockets (all on the same port as the http server)
     //*********************************************************************
 
-    const server = require('http').createServer();
+    const httpServer = require('http').createServer();
 
-    server.on('request', app);
-
-    server.on('error', e => {
+    httpServer.on('request', app);
+    httpServer.on('error', e => {
         logger.info(e);
         rejecter('server error');
     });
-
-    server.listen(8080, () => {
+    httpServer.listen(8080, () => {
         logger.info('app server listening on http://localhost:8080')
         resolver('server started');
     })
