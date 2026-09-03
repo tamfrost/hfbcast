@@ -9,4 +9,13 @@ services:
         APP_VERSION: ${APP_VERSION}
     ports:
       - 58080:8080
+  build-db:
+    image: ghcr.io/tamfrost/hfbcast-db:latest
+    container_name: hfbcast-db
+    build:
+      context: .
+      dockerfile: build-database.dockerfile
+      # args:
+        # COMMIT_SHA: ${COMMIT_SHA}
+        # APP_VERSION: ${APP_VERSION}
 
