@@ -45,6 +45,72 @@ jobs:
           docker push $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
           docker push $IMAGE_NAME:latest
 
+      # The scraped shortwavedb.org pages (AOKI, EiBi, HFCC, ITU) that the sqlite
+      # build parses are exported from the appbuild stage, which is already in the
+      # local build cache from "build app image", so this does not re-scrape.
+      - name: export scraped source pages
+        run: |
+          docker build --target source-html --output type=local,dest=pages-html . \
+          --build-arg NAMESPACE=${{ vars.NAMESPACE }} \
+          --build-arg COMMIT_SHA=$CI_COMMIT_SHORT_SHA \
+          --build-arg APP_VERSION=$APP_VERSION
+          ls -la pages-html
+
+      - name: generate pages index
+        run: |
+          BUILT_AT=$(date -u '+%Y-%m-%d %H:%M UTC')
+          {
+            echo '<!doctype html>'
+            echo '<html lang="en"><head><meta charset="utf-8">'
+            echo '<meta name="viewport" content="width=device-width,initial-scale=1">'
+            echo '<title>hfbcast source pages</title>'
+            echo '<style>'
+            echo 'body{font:16px/1.5 system-ui,sans-serif;max-width:44rem;margin:3rem auto;padding:0 1.25rem;color:#1a1a1a;background:#fff}'
+            echo 'h1{font-size:1.5rem;margin:0 0 .25rem}p{color:#555}'
+            echo 'ul{list-style:none;padding:0}'
+            echo 'li{border-top:1px solid #e5e5e5;padding:.75rem 0;display:flex;justify-content:space-between;gap:1rem}'
+            echo 'a{color:#0b5bd3;text-decoration:none;font-weight:600}a:hover{text-decoration:underline}'
+            echo 'small{color:#777}code{background:#f4f4f4;padding:.1rem .3rem;border-radius:3px}'
+            echo '@media(prefers-color-scheme:dark){body{background:#111;color:#eee}p,small{color:#aaa}li{border-color:#333}a{color:#6ea8fe}code{background:#222}}'
+            echo '</style></head><body>'
+            echo "<h1>hfbcast &mdash; scraped source pages</h1>"
+            echo "<p>Raw HTML fetched from <code>shortwavedb.org</code> and parsed into the broadcast database.</p>"
+            echo '<ul>'
+            for f in pages-html/*.html; do
+              [ -e "$f" ] || continue
+              name=$(basename "$f")
+              size=$(du -h "$f" | cut -f1)
+              echo "<li><a href=\"$name\">${name%.html}</a><small>$size</small></li>"
+            done
+            echo '</ul>'
+            echo "<p><small>Built $BUILT_AT from commit <code>$CI_COMMIT_SHORT_SHA</code> (v$APP_VERSION).</small></p>"
+            echo '</body></html>'
+          } > index.html.tmp
+          mv index.html.tmp pages-html/index.html
+          cat pages-html/index.html
+
+      - name: upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages-html
+
+  deploy-source-pages:
+    needs: build-and-publish-image
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - name: deploy to github pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
   # deploy-to-stage:
   #   needs: build-and-publish-image
   #   uses: ./.github/workflows/deploy-argocd.yaml
