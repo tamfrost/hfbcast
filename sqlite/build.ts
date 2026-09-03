@@ -13,6 +13,16 @@ const jquery = require("jquery");
 
 type BroadcastArray = Broadcast[];
 
+// Scraped source pages are kept here so the build can publish them (GitHub Pages).
+const SOURCE_HTML_DIR = 'sources';
+fs.mkdirSync(SOURCE_HTML_DIR, { recursive: true });
+
+function saveSourceHtml(database: string, pageContent: string) {
+    const file = `${SOURCE_HTML_DIR}/${database}.html`;
+    fs.writeFileSync(file, pageContent);
+    console.log(`Page content saved to ${file}`);
+}
+
 async function scrapeAndParseBroadcasts(database: string, retries: number = 3): Promise<BroadcastArray> {
     console.log(`Starting browser for ${database}...`);
     const browser = await puppeteer.launch({
@@ -116,15 +126,13 @@ async function scrapeAndParseBroadcasts(database: string, retries: number = 3): 
             console.log(`Found ${tableCount} tables on the page`);
             
             // Save the page content for inspection
-            require('fs').writeFileSync(`debug_${database}.html`, pageContent);
-            console.log(`Page content saved to debug_${database}.html`);
+            saveSourceHtml(database, pageContent);
             
             throw new Error(`No table found for ${database}`);
         }
         
         // Save the page content for all successful parses
-        require('fs').writeFileSync(`debug_${database}.html`, pageContent);
-        console.log(`Page content saved to debug_${database}.html`);
+        saveSourceHtml(database, pageContent);
         
         console.log(`Parsing broadcasts for ${database}...`);
         
@@ -204,14 +212,6 @@ async function scrapeAndParseBroadcasts(database: string, retries: number = 3): 
         }
         
         console.log(`Found ${broadcasts.length} broadcasts for ${database}`);
-        
-        // Delete the debug HTML file after successful parsing
-        try {
-            require('fs').unlinkSync(`debug_${database}.html`);
-            console.log(`Deleted debug_${database}.html`);
-        } catch (e) {
-            // Ignore error if file doesn't exist
-        }
         
         return broadcasts;
         

@@ -117,6 +117,13 @@ RUN echo "{\"commitHash\": \"${CI_COMMIT_SHORT_SHA}\"}" > commithash.json && \
     npm run build
 
 #=====================================================
+# export scraped source pages (published to GitHub Pages)
+#=====================================================
+FROM scratch AS source-html
+
+COPY --from=appbuild /app/sqlite/sources /
+
+#=====================================================
 # final image
 #=====================================================
 FROM node:22.14.0-bookworm-slim
