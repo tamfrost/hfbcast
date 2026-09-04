@@ -10,7 +10,7 @@ const db = require('./database')
 
 const logger = log4js.getLogger();
 
-function server(config, silent) {    
+function server(config, silent) {
 
     logger.level = silent ? 'fatal' : 'debug';
 
@@ -45,7 +45,7 @@ function server(config, silent) {
     })
 
     app.get("/api/v1/broadcast", (req, res) => {
-        const result = db.findBetweenFrequencies(120.1, "lol")
+        const result = db.findByName("Paris")
         if (!result) {
             return res.status(404).json({
                 error: "Failed to query database"
@@ -53,22 +53,6 @@ function server(config, silent) {
         }
         res.json({result})
     })
-
-    //******************************
-    //          proxy
-    //******************************
-
-    const { createProxyMiddleware } = require('http-proxy-middleware');
-
-    app.use('/jsontest',
-        createProxyMiddleware({
-            target: 'http://echo.jsontest.com/',
-            changeOrigin: true,
-            pathRewrite: {
-                '^/jsontest':''
-            }
-        }),
-    );
 
     //*********************************************************************
     //     set up web sockets (all on the same port as the http server)
