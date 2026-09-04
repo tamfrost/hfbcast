@@ -20,7 +20,7 @@ function server(config, silent) {
     app.use(cors());
     app.options('*', cors());
 
-    db.initDb()
+    db.initDb(logger)
 
     // server static homepage content
     app.use('/', express.static(path.join(__dirname, 'public')));
@@ -45,7 +45,7 @@ function server(config, silent) {
     })
 
     app.get("/api/v1/broadcast", (req, res) => {
-        const result = db.findAll()
+        const result = db.findBetweenFrequencies(120.1, "lol")
         if (!result) {
             return res.status(404).json({
                 error: "Failed to query database"
