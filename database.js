@@ -1,7 +1,6 @@
-const fs =  require('fs')
+const fs = require('fs')
 const zlib = require('zlib')
-const { pipeline } = require('stream/promises');
-const Database = require("better-sqlite3");
+const initSqlJs = require('sql.js')
 
 let db;
 let logger;
@@ -12,22 +11,15 @@ let logger;
 async function initDb(log) {
     logger = log
 
-    const compressedData    = './assets/database.sqlite.gz'
-    const decompressedData  = './assets/database.sqlite'
+    const compressedData = './assets/database.sqlite.gz'
 
     try {
-        await pipeline(
-            fs.createReadStream(compressedData),
-            zlib.createGunzip(),
-            fs.createWriteStream(decompressedData)
-        )
-        
-        db = new Database(decompressedData);
-        
-        // it is recommended to turn on WAL to increase performance 
-        // ref: https://github.com/WiseLibs/better-sqlite3/blob/master/docs/performance.md
-        db.pragma('journal_mode = WAL');
-    
+        const compressed = fs.readFileSync(compressedData)
+        const decompressed = zlib.gunzipSync(compressed)
+
+        const SQL = await initSqlJs()
+        db = new SQL.Database(new Uint8Array(decompressed))
+
         logger.info("Database initialized")
 
     } catch (error) {
@@ -36,15 +28,36 @@ async function initDb(log) {
 }
 
 /**
+ * Runs a SQL query against the sql.js database and returns the rows as an
+ * array of plain objects (column name -> value)
+ *
+ * @param {string} sql A SQL statement
+ * @param {*[]} [params] Optional bound parameters
+ * @returns {object[]} Array of row objects
+ */
+function execAsObjects(sql, params) {
+    const statement = db.prepare(sql)
+    if (params) {
+        statement.bind(params)
+    }
+    const rows = []
+    while (statement.step()) {
+        rows.push(statement.getAsObject())
+    }
+    statement.free()
+    return rows
+}
+
+/**
  *  @returns All rows in database
  */
 function findAll() {
-    const getAll = db.prepare(`
+    const getAll = `
         SELECT * FROM broadcast 
         JOIN site on broadcast.siteId = site.id
         ORDER BY broadcast.siteId
-    `)
-    return getAll.all()
+    `
+    return execAsObjects(getAll)
 }
 
 /**
@@ -55,12 +68,13 @@ function findBySiteId(siteId) {
     if (!Number.isInteger(siteId) || siteId < 1) {
         return {error: "Invalid site id number, must above 0"}
     }
-    const getById = db.prepare(`
+    // siteId is validated as a positive integer, so interpolation is safe.
+    const getById = `
         SELECT * FROM broadcast
         JOIN site on broadcast.siteId = site.id
         WHERE siteId = ?
-    `)
-    return getById.all(siteId)
+    `
+    return execAsObjects(getById, [siteId])
 }
 
 /**
@@ -72,12 +86,12 @@ function findByFrequency(frequency) {
         return {error: `Invalid frequency: ${frequency}, must be number between 0 - 30 000`}
     }
 
-    const getByFrequency = db.prepare(`
+    const getByFrequency = `
         SELECT * FROM broadcast
         JOIN site on broadcast.siteId = site.id
         WHERE frequency = ?
-    `)
-    return getByFrequency.all(frequency)
+    `
+    return execAsObjects(getByFrequency, [frequency])
 }
 
 /**
@@ -101,13 +115,13 @@ function findBetweenFrequencies(minFreq, maxFreq) {
         logger.info("[findBetweenFrequencies]: Min was higher than max, swapping ...")
     }
 
-    const getBetweenFreqs = db.prepare(`
+    const getBetweenFreqs = `
         SELECT * FROM broadcast
-        JOIN site on broadcast.siteId = site.id 
-        WHERE broadcast.frequency <= ${maxFreq} 
-        AND   broadcast.frequency >= ${minFreq}
-    `)
-    return getBetweenFreqs.all()
+        JOIN site on broadcast.siteId = site.id
+        WHERE broadcast.frequency <= ?
+        AND   broadcast.frequency >= ?
+    `
+    return execAsObjects(getBetweenFreqs, [maxFreq, minFreq])
 }
 
 /**
@@ -117,7 +131,7 @@ function findBetweenFrequencies(minFreq, maxFreq) {
  * @returns true if interger and in interval [0 - 30 000]
  */
 function validFrequency(f) {
-    if (Number.isNaN(f) || f < 0 || f > 30000) {
+    if (!Number.isFinite(Number(f)) || Number(f) < 0 || Number(f) > 30000) {
         logger.info(`Got invalid frequency in request: ${f}`)
         return false
     }

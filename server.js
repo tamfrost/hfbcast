@@ -10,7 +10,7 @@ const db = require('./database')
 
 const logger = log4js.getLogger();
 
-function server(config, silent) {    
+async function server(config, silent) {
 
     logger.level = silent ? 'fatal' : 'debug';
 
@@ -20,7 +20,7 @@ function server(config, silent) {
     app.use(cors());
     app.options('*', cors());
 
-    db.initDb(logger)
+    await db.initDb(logger)
 
     // server static homepage content
     app.use('/', express.static(path.join(__dirname, 'public')));
@@ -29,60 +29,50 @@ function server(config, silent) {
     //          REST
     //******************************
 
-    app.get('/api/v1/resource/:parameter', (req, res, next) => {
-        reqURL = new URL(req.url, 'http://' + req.headers.host + '/');
-
-
-        res.json({
-            parameter: req.params.parameter,
-            queryVar1: reqURL.searchParams.get('var1'),
-            queryVar2: reqURL.searchParams.get('var2'),
-        })
-    })
-
-    app.post('/api/v1/resource', (req, res, next) => {
-        res.json({requestBody: req.body});
-    })
-
-    app.get("/api/v1/broadcast", (req, res) => {
-        const result = db.findBetweenFrequencies(120.1, "lol")
-        if (!result) {
-            return res.status(404).json({
-                error: "Failed to query database"
-            })
+    /**
+     * Sends the result of a database query.
+     * database.js functions return either an array of row objects
+     * or an { error: "..." } object on invalid input.
+     */
+    function sendResult(res, result) {
+        if (result && result.error) {
+            return res.status(400).json(result)
         }
-        res.json({result})
+        res.json(result)
+    }
+
+    // GET /api/v1/broadcasts — return all rows
+    app.get('/api/v1/broadcasts', (req, res) => {
+        sendResult(res, db.findAll())
     })
 
-    //******************************
-    //          proxy
-    //******************************
+    // GET /api/v1/broadcasts/site/:id — return rows for a given site id
+    app.get('/api/v1/broadcasts/site/:id', (req, res) => {
+        sendResult(res, db.findBySiteId(Number(req.params.id)))
+    })
 
-    const { createProxyMiddleware } = require('http-proxy-middleware');
+    // GET /api/v1/broadcasts/frequency/:freq — return rows for an exact frequency (kHz)
+    app.get('/api/v1/broadcasts/frequency/:freq', (req, res) => {
+        sendResult(res, db.findByFrequency(Number(req.params.freq)))
+    })
 
-    app.use('/jsontest',
-        createProxyMiddleware({
-            target: 'http://echo.jsontest.com/',
-            changeOrigin: true,
-            pathRewrite: {
-                '^/jsontest':''
-            }
-        }),
-    );
+    // GET /api/v1/broadcasts/frequency-range?min=&max= — return rows within a frequency range (kHz)
+    app.get('/api/v1/broadcasts/frequency-range', (req, res) => {
+        sendResult(res, db.findBetweenFrequencies(Number(req.query.min), Number(req.query.max)))
+    })
 
     //*********************************************************************
     //     set up web sockets (all on the same port as the http server)
     //*********************************************************************
 
-    const httpServer = require('http').createServer();
+    const httpServer = require('http').createServer(app);
 
-    httpServer.on('request', app);
     httpServer.on('error', e => {
         logger.info(e);
         rejecter('server error');
     });
-    httpServer.listen(8080, () => {
-        logger.info('app server listening on http://localhost:8080')
+    httpServer.listen(8000, '0.0.0.0', () => {
+        logger.info('app server listening on http://0.0.0.0:8000')
         resolver('server started');
     })
 

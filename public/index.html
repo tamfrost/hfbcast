@@ -10,8 +10,71 @@
     <div id="app">
         <header>
             <h1>HF Broadcast Database</h1>
-            <p class="subtitle">HF Broadcast data from public sources</p>
+            <p class="subtitle">Query HF Broadcast data from public sources</p>
         </header>
+
+        <main>
+            <section class="panel">
+                <h2>Query</h2>
+                <div class="control-row">
+                    <label for="queryType">Query type</label>
+                    <select id="queryType">
+                        <option value="all">All broadcasts</option>
+                        <option value="site">By site ID</option>
+                        <option value="frequency">By exact frequency</option>
+                        <option value="range">By frequency range</option>
+                    </select>
+                </div>
+
+                <div id="inputs">
+                    <div class="control-row" data-input="site">
+                        <label for="siteId">Site ID</label>
+                        <input type="number" id="siteId" min="1" step="1" placeholder="e.g. 5">
+                    </div>
+                    <div class="control-row" data-input="frequency">
+                        <label for="frequency">Frequency (kHz)</label>
+                        <input type="number" id="frequency" min="0" max="30000" step="0.1" placeholder="e.g. 9580">
+                    </div>
+                    <div class="control-row" data-input="range">
+                        <label for="minFreq">Min frequency (kHz)</label>
+                        <input type="number" id="minFreq" min="0" max="30000" step="0.1" placeholder="e.g. 9500">
+                    </div>
+                    <div class="control-row" data-input="range">
+                        <label for="maxFreq">Max frequency (kHz)</label>
+                        <input type="number" id="maxFreq" min="0" max="30000" step="0.1" placeholder="e.g. 9700">
+                    </div>
+                </div>
+
+                <div class="control-row">
+                    <button id="searchBtn">Search</button>
+                </div>
+            </section>
+
+            <section class="results">
+                <div id="status" class="status"></div>
+                <div class="table-wrap">
+                    <table id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>Station</th>
+                                <th>Country</th>
+                                <th>Language</th>
+                                <th>Frequency (kHz)</th>
+                                <th>Days</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Site</th>
+                                <th>Power (kW)</th>
+                                <th>Latitude</th>
+                                <th>Longitude</th>
+                                <th>Source</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
     </div>
     <script src="app.js"></script>
 </body>
