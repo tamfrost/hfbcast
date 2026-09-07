@@ -27,7 +27,7 @@ RUN mkdir -p /tmp/certs && \
 ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
 
 # Build database inline
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
         fonts-liberation \
         libasound2 \
@@ -63,8 +63,7 @@ RUN apt-get update && apt-get install -y \
         libxtst6 \
         lsb-release \
         wget \
-        xdg-utils \
-        --no-install-recommends && \
+        xdg-utils && \
     rm -rf /var/lib/apt/lists/*
 
 # Re-add custom CA certificates after apt-get install
@@ -84,9 +83,5 @@ RUN cd sqlite && \
     npm install && \
     npm rebuild sqlite3 && \
     npx puppeteer browsers install chrome
-    
-    # npm run build && \
-    # gzip database.sqlite && \
-    # mv database.sqlite.gz ../assets
 
-# CMD [ "build-db.sh" ]
+CMD [ "sh", "-c", "npm run build && gzip database.sqlite && mv database.sqlite.gz ../../database/database.sqlite.gz" ]

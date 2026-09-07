@@ -5,6 +5,9 @@ const initSqlJs = require('sql.js')
 let db;
 let logger;
 
+const MIN_FREQUENCY = 0
+const MAX_FREQUENCY = 30_000
+
 /**
  *  Initializes the database, required before any query can be done
  */
@@ -68,7 +71,7 @@ function findBySiteId(siteId) {
     if (!Number.isInteger(siteId) || siteId < 1) {
         return {error: "Invalid site id number, must above 0"}
     }
-    // siteId is validated as a positive integer, so interpolation is safe.
+    
     const getById = `
         SELECT * FROM broadcast
         JOIN site on broadcast.siteId = site.id
@@ -83,7 +86,8 @@ function findBySiteId(siteId) {
  */
 function findByFrequency(frequency) {
     if (!validFrequency(frequency)) {
-        return {error: `Invalid frequency: ${frequency}, must be number between 0 - 30 000`}
+        return {error: `Invalid frequency: ${frequency}, 
+            must be number between ${MIN_FREQUENCY} - ${MAX_FREQUENCY}`}
     }
 
     const getByFrequency = `
@@ -101,10 +105,12 @@ function findByFrequency(frequency) {
  */
 function findBetweenFrequencies(minFreq, maxFreq) {
     if (!validFrequency(minFreq)) {
-        return {error: `Invalid frequency: ${minFreq}, must be integer between 0 - 30 000`}
+        return {error: `Invalid frequency: ${minFreq}, 
+            must be integer between ${MIN_FREQUENCY} - ${MAX_FREQUENCY}`}
     }
     if (!validFrequency(maxFreq)) {
-        return {error: `Invalid frequency: ${maxFreq}, must be integer between 0 - 30 000`}
+        return {error: `Invalid frequency: ${maxFreq}, 
+            must be integer between ${MIN_FREQUENCY} - ${MAX_FREQUENCY}`}
     }
 
     // if we received min as max, we are nice and swap them
@@ -117,21 +123,55 @@ function findBetweenFrequencies(minFreq, maxFreq) {
 
     const getBetweenFreqs = `
         SELECT * FROM broadcast
-        JOIN site on broadcast.siteId = site.id
-        WHERE broadcast.frequency <= ?
-        AND   broadcast.frequency >= ?
+        JOIN site on broadcast.siteId = site.id 
+        WHERE broadcast.frequency >= ?
+        AND   broadcast.frequency <= ?
     `
-    return execAsObjects(getBetweenFreqs, [maxFreq, minFreq])
+    return execAsObjects(getBetweenFreqs, [minFreq, maxFreq])
+}
+
+/**
+ * @param {float} frequency in kHz
+ * @param {float} df optional delta frequency in kHz
+ * @returns All stations within the interval: [frequency - df, frequency + df]
+ */
+function findAroundFrequency(frequency, df=100) {
+    if (!validFrequency(frequency)) {
+        return {error: `Invalid frequency: ${frequency}, 
+            must be integer between ${MIN_FREQUENCY} - ${MAX_FREQUENCY}`}
+    }
+
+    let min = frequency - df
+    let max = frequency + df    
+    if (min < MIN_FREQUENCY) { min = MIN_FREQUENCY }
+    if (max > MAX_FREQUENCY) { max = MAX_FREQUENCY }
+    
+    return findBetweenFrequencies(min, max)
+}
+
+/**
+ * @param {string} name Partial or full name of station
+ * @returns All matching stations for given name
+ */
+function findByName(name) {
+    const getByStation = db.prepare(`
+        SELECT *
+        FROM broadcast
+        JOIN site ON broadcast.siteId = site.id
+        WHERE broadcast.station LIKE ?
+    `)
+
+    return execAsObjects(getByStation, [name])
 }
 
 /**
  * Parameter validation check for frequency in kHz
  * 
  * @param {float} f A frequency in kHz
- * @returns true if interger and in interval [0 - 30 000]
+ * @returns true if interger and in interval [{@link MIN_FREQUENCY}, {@link MAX_FREQUENCY}].
  */
 function validFrequency(f) {
-    if (!Number.isFinite(Number(f)) || Number(f) < 0 || Number(f) > 30000) {
+    if (!Number.isFinite(Number(f)) || Number(f) < MIN_FREQUENCY || Number(f) > MAX_FREQUENCY) {
         logger.info(`Got invalid frequency in request: ${f}`)
         return false
     }
@@ -144,4 +184,6 @@ module.exports = {
     findBySiteId,
     findByFrequency,
     findBetweenFrequencies,
+    findAroundFrequency,
+    findByName,
 }

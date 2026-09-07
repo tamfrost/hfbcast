@@ -41,22 +41,18 @@ async function server(config, silent) {
         res.json(result)
     }
 
-    // GET /api/v1/broadcasts — return all rows
     app.get('/api/v1/broadcasts', (req, res) => {
         sendResult(res, db.findAll())
     })
 
-    // GET /api/v1/broadcasts/site/:id — return rows for a given site id
     app.get('/api/v1/broadcasts/site/:id', (req, res) => {
         sendResult(res, db.findBySiteId(Number(req.params.id)))
     })
 
-    // GET /api/v1/broadcasts/frequency/:freq — return rows for an exact frequency (kHz)
     app.get('/api/v1/broadcasts/frequency/:freq', (req, res) => {
         sendResult(res, db.findByFrequency(Number(req.params.freq)))
     })
-
-    // GET /api/v1/broadcasts/frequency-range?min=&max= — return rows within a frequency range (kHz)
+    
     app.get('/api/v1/broadcasts/frequency-range', (req, res) => {
         sendResult(res, db.findBetweenFrequencies(Number(req.query.min), Number(req.query.max)))
     })
