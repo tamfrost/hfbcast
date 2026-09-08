@@ -9,6 +9,14 @@ services:
         APP_VERSION: ${APP_VERSION}
     ports:
       - 58080:8080
+  apiserver:
+    image: hfbcast-apiserver:latest
+    container_name: hfbcast-apiserver
+    build:
+      context: .
+      dockerfile: apiserver.dockerfile
+    ports:
+      - 8000:8000
   build-db:
     image: ghcr.io/tamfrost/hfbcast-db:latest
     container_name: hfbcast-db
