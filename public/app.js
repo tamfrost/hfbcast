@@ -283,5 +283,27 @@ document.querySelectorAll('#inputs input').forEach(input => {
     })
 })
 
+// Fetch and display database build info in the header
+async function loadBuildInfo() {
+    const el = document.getElementById('buildInfo')
+    try {
+        const response = await fetch(`${API_BASE}/buildinfo`)
+        const data = await response.json()
+        if (response.ok && Array.isArray(data) && data.length > 0) {
+            const info = data[0]
+            const buildDate = info.buildDate
+                ? new Date(info.buildDate).toLocaleString()
+                : 'unknown'
+            const commitHash = info.commitHash || 'unknown'
+            el.textContent = `Database build: ${buildDate} (commit: ${commitHash})`
+        } else {
+            el.textContent = 'Database build info unavailable'
+        }
+    } catch {
+        el.textContent = 'Database build info unavailable'
+    }
+}
+
 // initialize view
 updateInputs()
+loadBuildInfo()

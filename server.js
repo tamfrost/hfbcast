@@ -40,12 +40,8 @@ async function server() {
     db.setLogger(logger)
     await db.initDb()
 
-    // server static homepage content
+    // server static homepage content from /public folder
     app.use('/', express.static(path.join(__dirname, 'public')));
-
-    //******************************
-    //          REST
-    //******************************
 
     app.get('/api/v1/broadcasts', (req, res) => {
         const { sortBy, sortDir } = sortParams(req)
@@ -64,7 +60,14 @@ async function server() {
     
     app.get('/api/v1/broadcasts/frequency-range', (req, res) => {
         const { sortBy, sortDir } = sortParams(req)
-        sendResult(res, db.findBetweenFrequencies(Number(req.query.min), Number(req.query.max), sortBy, sortDir))
+        sendResult(res, 
+            db.findBetweenFrequencies(
+                Number(req.query.min), 
+                Number(req.query.max), 
+                sortBy, 
+                sortDir
+            )
+        )
     })
 
     app.get('/api/v1/broadcasts/frequency-around/:freq', (req, res) => {
@@ -78,12 +81,12 @@ async function server() {
         sendResult(res, db.findByName(req.query.q, sortBy, sortDir))
     })
 
-    //*********************************************************************
-    //     set up web sockets (all on the same port as the http server)
-    //*********************************************************************
+    app.get('/api/v1/broadcasts/buildinfo', (req, res) => {
+        sendResult(res, db.getBuildInfo())
+    })
+    
 
     const httpServer = http.createServer(app);
-
     httpServer.on('error', e => {
         logger.error(e);
         process.exit(1);

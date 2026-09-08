@@ -237,6 +237,16 @@ function findByName(name, sortBy, sortDir) {
 }
 
 /**
+ * @returns infomation about database build
+ */
+function getBuildInfo() {
+    const buildInfo = `
+        SELECT * FROM build_info ORDER BY id DESC LIMIT 1
+    `
+    return execAsObjects(buildInfo)
+}
+
+/**
  * Parameter validation check for frequency in kHz
  * 
  * @param {float} f A frequency in kHz
@@ -259,6 +269,7 @@ module.exports = {
     findBetweenFrequencies,
     findAroundFrequency,
     findByName,
+    getBuildInfo,
     buildOrderBy,
     SORTABLE_COLUMNS,
 }
