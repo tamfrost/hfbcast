@@ -7,7 +7,26 @@ const searchBtn = document.getElementById('searchBtn')
 const statusEl = document.getElementById('status')
 const tbody = document.querySelector('#resultsTable tbody')
 
+// API inspector elements
+const reqMethodEl = document.getElementById('reqMethod')
+const reqUrlEl = document.getElementById('reqUrl')
+const reqCurlEl = document.getElementById('reqCurl')
+const resStatusEl = document.getElementById('resStatus')
+const resJsonEl = document.getElementById('resJson')
+const copyReqBtn = document.getElementById('copyReqBtn')
+const copyResBtn = document.getElementById('copyResBtn')
+
+let lastResponseText = ''
+let lastRows = []              // cached result set for client-side re-sorting
+let clientSortKey = null       // active header sort key, or null
+let clientSortDir = 'asc'      // 'asc' | 'desc'
+
+const inspectorEl = document.getElementById('inspector')
+const resultsHead = document.querySelector('#resultsTable thead')
+
 const inputGroups = document.querySelectorAll('#inputs [data-input]')
+const sortBySelect = document.getElementById('sortBy')
+const sortDirSelect = document.getElementById('sortDir')
 
 // Show/hide inputs based on the selected query type
 function updateInputs() {
@@ -27,6 +46,66 @@ function setStatus(message, isError) {
 function clearTable() {
     tbody.innerHTML = ''
 }
+
+/**
+ * Updates the visual state of sortable headers: removes arrows and the
+ * active class from all headers, then applies them to the active one.
+ */
+function updateHeaderIndicators() {
+    resultsHead.querySelectorAll('th[data-sort]').forEach(th => {
+        th.classList.remove('sort-active')
+        const arrow = th.querySelector('.sort-arrow')
+        if (arrow) arrow.remove()
+    })
+    if (clientSortKey) {
+        const activeTh = resultsHead.querySelector(`th[data-sort="${clientSortKey}"]`)
+        if (activeTh) {
+            activeTh.classList.add('sort-active')
+            const span = document.createElement('span')
+            span.className = 'sort-arrow'
+            span.textContent = clientSortDir === 'asc' ? '▲' : '▼'
+            activeTh.appendChild(span)
+        }
+    }
+}
+
+/**
+ * Sorts the cached `lastRows` array in place by `key`/`dir` and re-renders.
+ * Toggles direction when the same header is clicked again.
+ */
+function sortByHeader(key) {
+    if (clientSortKey === key) {
+        clientSortDir = clientSortDir === 'asc' ? 'desc' : 'asc'
+    } else {
+        clientSortKey = key
+        clientSortDir = 'asc'
+    }
+
+    lastRows.sort((a, b) => {
+        const va = a[key]
+        const vb = b[key]
+        if (va === null || va === undefined) return 1
+        if (vb === null || vb === undefined) return -1
+        if (typeof va === 'number' && typeof vb === 'number') {
+            return clientSortDir === 'asc' ? va - vb : vb - va
+        }
+        const cmp = String(va).localeCompare(String(vb))
+        return clientSortDir === 'asc' ? cmp : -cmp
+    })
+
+    clearTable()
+    renderRows(lastRows)
+    updateHeaderIndicators()
+}
+
+// Wire up click handlers on sortable headers
+resultsHead.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+        if (lastRows.length > 0) {
+            sortByHeader(th.dataset.sort)
+        }
+    })
+})
 
 // Escape HTML to avoid injection from DB text fields
 function esc(value) {
@@ -94,14 +173,73 @@ async function runQuery() {
             return
         }
         url += `/frequency-range?min=${encodeURIComponent(min)}&max=${encodeURIComponent(max)}`
+    } else if (type === 'around') {
+        const freq = document.getElementById('aroundFreq').value
+        if (!freq) {
+            setStatus('Please enter a frequency', true)
+            return
+        }
+        const df = document.getElementById('aroundDf').value
+        url += `/frequency-around/${encodeURIComponent(freq)}`
+        if (df) {
+            url += `?df=${encodeURIComponent(df)}`
+        }
+    } else if (type === 'name') {
+        const q = document.getElementById('stationName').value
+        if (!q) {
+            setStatus('Please enter a station name', true)
+            return
+        }
+        url += `/name?q=${encodeURIComponent(q)}`
+    }
+
+    // Append optional sort parameters, joining correctly whether or not
+    // the URL already contains a query string.
+    const sortBy = sortBySelect.value
+    const sortDir = sortDirSelect.value
+    if (sortBy) {
+        url += (url.includes('?') ? '&' : '?') +
+            `sortBy=${encodeURIComponent(sortBy)}&sortDir=${encodeURIComponent(sortDir)}`
     }
 
     clearTable()
     setStatus('Loading...', false)
 
+    // Reset client-side sort state for the new result set. The active header
+    // is derived from the server-applied sort (dropdowns), so the arrow
+    // indicator matches what the server actually ordered by.
+    lastRows = []
+    clientSortKey = sortBy || null
+    clientSortDir = sortDir
+    updateHeaderIndicators()
+
+    // Show the inspector and update the API request view
+    inspectorEl.hidden = false
+    const fullUrl = window.location.origin + url
+    reqMethodEl.textContent = 'GET'
+    reqUrlEl.textContent = fullUrl
+    reqCurlEl.textContent = `curl -s "${fullUrl}"`
+
     try {
         const response = await fetch(url)
-        const data = await response.json()
+        const responseText = await response.text()
+        lastResponseText = responseText
+
+        let data
+        try {
+            data = JSON.parse(responseText)
+        } catch {
+            setStatus('Received invalid JSON from server', true)
+            resStatusEl.textContent = `HTTP ${response.status}`
+            resStatusEl.className = 'status-badge status-err'
+            resJsonEl.textContent = responseText
+            return
+        }
+
+        // Update the API response inspector
+        resStatusEl.textContent = `HTTP ${response.status}`
+        resStatusEl.className = 'status-badge ' + (response.ok ? 'status-ok' : 'status-err')
+        resJsonEl.textContent = JSON.stringify(data, null, 2)
 
         if (!response.ok) {
             const message = (data && data.error) ? data.error : `Request failed (${response.status})`
@@ -109,11 +247,32 @@ async function runQuery() {
             return
         }
 
+        // Cache the result set so headers can re-sort client-side without
+        // another network request.
+        lastRows = data
         renderRows(data)
     } catch (err) {
         setStatus(`Request failed: ${err.message}`, true)
+        resStatusEl.textContent = 'Error'
+        resStatusEl.className = 'status-badge status-err'
+        resJsonEl.textContent = err.message
     }
 }
+
+// Copy-to-clipboard helpers for the inspector
+async function copyText(text, btn) {
+    try {
+        await navigator.clipboard.writeText(text)
+        const original = btn.textContent
+        btn.textContent = 'Copied!'
+        setTimeout(() => { btn.textContent = original }, 1500)
+    } catch {
+        btn.textContent = 'Copy failed'
+    }
+}
+
+copyReqBtn.addEventListener('click', () => copyText(reqCurlEl.textContent, copyReqBtn))
+copyResBtn.addEventListener('click', () => copyText(lastResponseText, copyResBtn))
 
 searchBtn.addEventListener('click', runQuery)
 

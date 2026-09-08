@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HF-BCAST</title>
+    <title>HF Broadcast Database</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -23,6 +23,8 @@
                         <option value="site">By site ID</option>
                         <option value="frequency">By exact frequency</option>
                         <option value="range">By frequency range</option>
+                        <option value="around">By frequency (near)</option>
+                        <option value="name">By station name</option>
                     </select>
                 </div>
 
@@ -43,11 +45,69 @@
                         <label for="maxFreq">Max frequency (kHz)</label>
                         <input type="number" id="maxFreq" min="0" max="30000" step="0.1" placeholder="e.g. 9700">
                     </div>
+                    <div class="control-row" data-input="around">
+                        <label for="aroundFreq">Frequency (kHz)</label>
+                        <input type="number" id="aroundFreq" min="0" max="30000" step="0.1" placeholder="e.g. 9580">
+                    </div>
+                    <div class="control-row" data-input="around">
+                        <label for="aroundDf">Delta ± (kHz)</label>
+                        <input type="number" id="aroundDf" min="0" max="30000" step="0.1" placeholder="e.g. 100 (default)">
+                    </div>
+                    <div class="control-row" data-input="name">
+                        <label for="stationName">Station name</label>
+                        <input type="text" id="stationName" placeholder="e.g. Stockholm">
+                    </div>
+                </div>
+
+                <div class="control-row sort-controls">
+                    <label for="sortBy">Sort by</label>
+                    <select id="sortBy">
+                        <option value="station">Station</option>
+                        <option value="country">Country</option>
+                        <option value="language">Language</option>
+                        <option value="frequency" selected>Frequency</option>
+                        <option value="days">Days</option>
+                        <option value="startTime">Start time</option>
+                        <option value="endTime">End time</option>
+                        <option value="name">Site name</option>
+                        <option value="power">Power</option>
+                        <option value="lat">Latitude</option>
+                        <option value="lon">Longitude</option>
+                    </select>
+                    <select id="sortDir">
+                        <option value="asc">Ascending</option>
+                        <option value="desc">Descending</option>
+                    </select>
                 </div>
 
                 <div class="control-row">
                     <button id="searchBtn">Search</button>
                 </div>
+            </section>
+
+            <section class="inspector" id="inspector" hidden>
+                <details>
+                    <summary>API Request</summary>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span id="reqMethod" class="method-badge">GET</span>
+                            <code id="reqUrl" class="req-url"></code>
+                            <button id="copyReqBtn" class="copy-btn" title="Copy curl command">Copy curl</button>
+                        </div>
+                        <pre id="reqCurl" class="code"></pre>
+                    </div>
+                </details>
+
+                <details>
+                    <summary>API Response (JSON)</summary>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span id="resStatus" class="status-badge"></span>
+                            <button id="copyResBtn" class="copy-btn" title="Copy response JSON">Copy JSON</button>
+                        </div>
+                        <pre id="resJson" class="code"></pre>
+                    </div>
+                </details>
             </section>
 
             <section class="results">
@@ -56,17 +116,17 @@
                     <table id="resultsTable">
                         <thead>
                             <tr>
-                                <th>Station</th>
-                                <th>Country</th>
-                                <th>Language</th>
-                                <th>Frequency (kHz)</th>
-                                <th>Days</th>
-                                <th>Start</th>
-                                <th>End</th>
-                                <th>Site</th>
-                                <th>Power (kW)</th>
-                                <th>Latitude</th>
-                                <th>Longitude</th>
+                                <th data-sort="station">Station</th>
+                                <th data-sort="country">Country</th>
+                                <th data-sort="language">Language</th>
+                                <th data-sort="frequency">Frequency (kHz)</th>
+                                <th data-sort="days">Days</th>
+                                <th data-sort="startTime">Start</th>
+                                <th data-sort="endTime">End</th>
+                                <th data-sort="name">Site</th>
+                                <th data-sort="power">Power (kW)</th>
+                                <th data-sort="lat">Latitude</th>
+                                <th data-sort="lon">Longitude</th>
                                 <th>Source</th>
                             </tr>
                         </thead>

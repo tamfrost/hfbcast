@@ -85,7 +85,8 @@ main {
 }
 
 select,
-input[type="number"] {
+input[type="number"],
+input[type="text"] {
     background: var(--panel-2);
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -163,10 +164,151 @@ th {
     top: 0;
 }
 
+/* Sortable column headers (click to re-sort client-side) */
+th[data-sort] {
+    cursor: pointer;
+    user-select: none;
+}
+
+th[data-sort]:hover {
+    color: var(--accent-hover);
+}
+
+th[data-sort].sort-active {
+    color: var(--accent);
+}
+
+th[data-sort] .sort-arrow {
+    margin-left: 4px;
+    font-size: 0.75rem;
+}
+
 tbody tr:hover {
     background: var(--panel-2);
 }
 
 tbody tr:last-child td {
     border-bottom: none;
+}
+
+/* ===== API Request & Response Inspector ===== */
+
+.inspector {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.inspector details {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.inspector summary {
+    padding: 14px 20px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    user-select: none;
+    list-style: none;
+}
+
+.inspector summary::-webkit-details-marker {
+    display: none;
+}
+
+.inspector summary::before {
+    content: '▶';
+    display: inline-block;
+    margin-right: 10px;
+    font-size: 0.7rem;
+    transition: transform 0.15s;
+    color: var(--text-dim);
+}
+
+.inspector details[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.code-block {
+    border-top: 1px solid var(--border);
+}
+
+.code-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--border);
+}
+
+.method-badge {
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.req-url {
+    flex: 1;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.status-ok {
+    background: #2d7a46;
+    color: #fff;
+}
+
+.status-err {
+    background: var(--error);
+    color: #fff;
+}
+
+.copy-btn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    border-radius: 5px;
+    padding: 5px 12px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    margin-left: auto;
+}
+
+.copy-btn:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.code {
+    margin: 0;
+    padding: 16px 20px;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--text);
+    overflow-x: auto;
+    max-height: 500px;
+    overflow-y: auto;
+    white-space: pre;
 }
