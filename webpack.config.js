@@ -80,13 +80,7 @@ module.exports = async (env) => {
     
             const {server} = require("./server.js");
     
-            server({}, false)
-                .then(message => {
-                    console.log(message);
-                })
-                .catch(message => {
-                    console.error(message);
-                });
+            server();
         }
     }
     else {
