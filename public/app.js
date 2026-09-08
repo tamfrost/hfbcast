@@ -2,6 +2,11 @@
 
 const API_BASE = '/api/v1/broadcasts'
 
+// Number of rows rendered per page. Rendering all ~3.6k broadcasts at once
+// creates ~43k <td> nodes and causes significant layout/paint lag, so we
+// render one page at a time from the cached `lastRows` set.
+const PAGE_SIZE = 50
+
 const queryTypeSelect = document.getElementById('queryType')
 const searchBtn = document.getElementById('searchBtn')
 const statusEl = document.getElementById('status')
@@ -20,9 +25,12 @@ let lastResponseText = ''
 let lastRows = []              // cached result set for client-side re-sorting
 let clientSortKey = null       // active header sort key, or null
 let clientSortDir = 'asc'      // 'asc' | 'desc'
+let currentPage = 0            // zero-based index of the visible page
 
 const inspectorEl = document.getElementById('inspector')
 const resultsHead = document.querySelector('#resultsTable thead')
+const pagerEl = document.getElementById('pager')      // pagination controls container
+const responseDetails = document.getElementById('responseDetails')
 
 const inputGroups = document.querySelectorAll('#inputs [data-input]')
 const sortBySelect = document.getElementById('sortBy')
@@ -93,8 +101,9 @@ function sortByHeader(key) {
         return clientSortDir === 'asc' ? cmp : -cmp
     })
 
+    currentPage = 0
     clearTable()
-    renderRows(lastRows)
+    renderCurrentPage()
     updateHeaderIndicators()
 }
 
@@ -107,26 +116,37 @@ resultsHead.querySelectorAll('th[data-sort]').forEach(th => {
     })
 })
 
-// Escape HTML to avoid injection from DB text fields
+// Escape HTML to avoid injection from DB text fields.
+// A single reusable element avoids allocating thousands of <div> nodes when
+// rendering large result sets.
+const escaper = document.createElement('div')
 function esc(value) {
     if (value === null || value === undefined) return ''
-    const div = document.createElement('div')
-    div.textContent = String(value)
-    return div.innerHTML
+    escaper.textContent = String(value)
+    return escaper.innerHTML
 }
 
 function cell(value) {
     return `<td>${esc(value)}</td>`
 }
 
-function renderRows(rows) {
-    if (!rows || rows.length === 0) {
+/**
+ * Renders the page of `lastRows` indicated by `currentPage`.
+ * Only PAGE_SIZE rows are turned into DOM nodes at a time, which keeps
+ * layout and paint work small even for multi-thousand-row result sets.
+ */
+function renderCurrentPage() {
+    if (!lastRows || lastRows.length === 0) {
+        renderPager()
         setStatus('No results found', false)
         return
     }
 
+    const start = currentPage * PAGE_SIZE
+    const pageRows = lastRows.slice(start, start + PAGE_SIZE)
+
     const frag = document.createDocumentFragment()
-    rows.forEach(row => {
+    pageRows.forEach(row => {
         const tr = document.createElement('tr')
         tr.innerHTML =
             cell(row.station) +
@@ -144,7 +164,65 @@ function renderRows(rows) {
         frag.appendChild(tr)
     })
     tbody.appendChild(frag)
-    setStatus(`${rows.length} result${rows.length === 1 ? '' : 's'} found`, false)
+
+    renderPager()
+    const first = start + 1
+    const last = Math.min(start + PAGE_SIZE, lastRows.length)
+    setStatus(`${lastRows.length} result${lastRows.length === 1 ? '' : 's'} found (showing ${first}–${last})`, false)
+}
+
+/**
+ * Builds or refreshes the pagination controls below the table.
+ */
+function renderPager() {
+    pagerEl.innerHTML = ''
+    if (!lastRows || lastRows.length <= PAGE_SIZE) {
+        return
+    }
+
+    const totalPages = Math.ceil(lastRows.length / PAGE_SIZE)
+    const makeBtn = (label, page, disabled, ariaLabel) => {
+        const btn = document.createElement('button')
+        btn.type = 'button'
+        btn.className = 'page-btn'
+        btn.textContent = label
+        btn.setAttribute('aria-label', ariaLabel)
+        if (disabled) {
+            btn.disabled = true
+        } else {
+            btn.addEventListener('click', () => goToPage(page))
+        }
+        return btn
+    }
+
+    pagerEl.appendChild(makeBtn('⏮ First', 0, currentPage === 0, 'First page'))
+    pagerEl.appendChild(makeBtn('‹ Prev', currentPage - 1, currentPage === 0, 'Previous page'))
+
+    // Page number buttons: show a windowed range around the current page so
+    // we don't render hundreds of buttons for very large result sets.
+    const windowSize = 5
+    let from = Math.max(0, currentPage - Math.floor(windowSize / 2))
+    const to = Math.min(totalPages, from + windowSize)
+    from = Math.max(0, to - windowSize)
+    for (let p = from; p < to; p++) {
+        const btn = makeBtn(String(p + 1), p, false, `Go to page ${p + 1}`)
+        if (p === currentPage) btn.classList.add('page-active')
+        pagerEl.appendChild(btn)
+    }
+
+    pagerEl.appendChild(makeBtn('Next ›', currentPage + 1, currentPage >= totalPages - 1, 'Next page'))
+    pagerEl.appendChild(makeBtn('Last ⏭', totalPages - 1, currentPage >= totalPages - 1, 'Last page'))
+}
+
+/**
+ * Switches to a new page and re-renders the table body.
+ */
+function goToPage(page) {
+    const totalPages = Math.ceil(lastRows.length / PAGE_SIZE)
+    if (page < 0 || page >= totalPages) return
+    currentPage = page
+    clearTable()
+    renderCurrentPage()
 }
 
 async function runQuery() {
@@ -203,12 +281,14 @@ async function runQuery() {
     }
 
     clearTable()
+    pagerEl.innerHTML = ''
     setStatus('Loading...', false)
 
     // Reset client-side sort state for the new result set. The active header
     // is derived from the server-applied sort (dropdowns), so the arrow
     // indicator matches what the server actually ordered by.
     lastRows = []
+    currentPage = 0
     clientSortKey = sortBy || null
     clientSortDir = sortDir
     updateHeaderIndicators()
@@ -236,10 +316,13 @@ async function runQuery() {
             return
         }
 
-        // Update the API response inspector
+        // Update the API response inspector status. The full JSON body is
+        // pretty-printed lazily only when the user expands the response
+        // panel — stringify-ing 3.6k rows up front is expensive and the
+        // panel is collapsed by default.
         resStatusEl.textContent = `HTTP ${response.status}`
         resStatusEl.className = 'status-badge ' + (response.ok ? 'status-ok' : 'status-err')
-        resJsonEl.textContent = JSON.stringify(data, null, 2)
+        stashInspectorJson(data)
 
         if (!response.ok) {
             const message = (data && data.error) ? data.error : `Request failed (${response.status})`
@@ -250,13 +333,46 @@ async function runQuery() {
         // Cache the result set so headers can re-sort client-side without
         // another network request.
         lastRows = data
-        renderRows(data)
+        renderCurrentPage()
     } catch (err) {
         setStatus(`Request failed: ${err.message}`, true)
         resStatusEl.textContent = 'Error'
         resStatusEl.className = 'status-badge status-err'
         resJsonEl.textContent = err.message
     }
+}
+
+/**
+ * Stashes the parsed response data so it can be pretty-printed into the
+ * inspector on demand. The JSON.stringify call and the DOM text assignment
+ * are both deferred until the response <details> panel is actually expanded,
+ * avoiding a large synchronous string build and layout pass for content the
+ * user isn't looking at.
+ */
+let pendingInspectorData = null
+function stashInspectorJson(data) {
+    pendingInspectorData = data
+    resJsonEl.textContent = ''
+    if (responseDetails.open) {
+        flushInspectorJson()
+    } else {
+        responseDetails.dataset.rendered = '0'
+    }
+}
+
+// When the response panel is expanded, materialise any deferred JSON.
+responseDetails.addEventListener('toggle', () => {
+    if (responseDetails.open && responseDetails.dataset.rendered !== '1') {
+        flushInspectorJson()
+    }
+})
+
+function flushInspectorJson() {
+    if (pendingInspectorData !== null) {
+        resJsonEl.textContent = JSON.stringify(pendingInspectorData, null, 2)
+        pendingInspectorData = null
+    }
+    responseDetails.dataset.rendered = '1'
 }
 
 // Copy-to-clipboard helpers for the inspector
